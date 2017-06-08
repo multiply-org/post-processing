@@ -1,0 +1,21 @@
+about:
+  summary: "MULTIPLY post processing package"
+  home: https://github.com/multiply-org/post_processing
+
+package:
+  name: multiply_post_processing
+  version: "0.1"
+
+source:
+  git_url: "https://github.com/multiply-org/post_processing.git"
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
