@@ -1,9 +1,8 @@
-<img alt="MULTIPLY" align="right" src="https://raw.githubusercontent.com/multiply-org/multiply-processing/master/doc/source/_static/logo/Multiply_multicolour.png" />
+<img alt="MULTIPLY" align="right" src="https://raw.githubusercontent.com/multiply-org/multiply-core/master/doc/source/_static/logo/Multiply_multicolour.png" />
 
 
 [![Build Status](https://travis-ci.org/multiply-org/multiply-processing.svg?branch=master)](https://travis-ci.org/multiply-org/multiply-processing)
-[![Documentation Status](https://readthedocs.org/projects/multiply/badge/?version=latest)](http://multiply.readthedocs.io/en/latest/?badge=latest)
-                
+
 # MULTIPLY Post Processing
 
 This repository contains the MULTIPLY post processing functionality.
