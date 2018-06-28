@@ -28,3 +28,14 @@ def get_post_processor_names() -> List[str]:
     for post_processor in POST_PROCESSOR_REGISTRY:
         post_processor_names.append(post_processor.get_name())
     return post_processor_names
+
+
+def get_post_processor(name: str) -> PostProcessor:
+    """
+    :param A name of a post-processor
+    :return: the post processor of the requested name
+    """
+    for post_processor in POST_PROCESSOR_REGISTRY:
+        if name == post_processor.get_name():
+            return post_processor
+    raise ValueError('No post processor with name {} found.'.format(name))
