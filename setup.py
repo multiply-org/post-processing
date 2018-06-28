@@ -16,7 +16,7 @@ setup(name='multiply-post-processing',
       author='MULTIPLY Team',
       packages=['multiply_post_processing'],
       entry_points={
-          'post_processors': [
+          'post_processor_creators': [
           ],
       },
       install_requires=requirements

@@ -3,14 +3,14 @@ from typing import List
 import numpy as np
 
 import multiply_post_processing
-from multiply_post_processing import IndicatorDescription, VariablePostProcessor
+from multiply_post_processing import IndicatorDescription, PostProcessorCreator, VariablePostProcessor
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
 
 def test_add_post_processor():
-    dummy_post_processor = DummyPostProcessor()
-    multiply_post_processing.add_post_processor(dummy_post_processor)
+    dummy_post_processor_creator = DummyPostProcessorCreator()
+    multiply_post_processing.add_post_processor_creator(dummy_post_processor_creator)
     post_processor_names = multiply_post_processing.get_post_processor_names()
     assert 1, len(post_processor_names)
     assert "dummy", post_processor_names[0]
@@ -43,3 +43,15 @@ class DummyPostProcessor(VariablePostProcessor):
 
     def initialize(self):
         pass
+
+
+class DummyPostProcessorCreator(PostProcessorCreator):
+
+    def get_name(cls) -> str:
+        return DummyPostProcessor.get_name()
+
+    def get_description(cls) -> str:
+        return DummyPostProcessor.get_description()
+
+    def create_post_processor(cls) -> DummyPostProcessor:
+        return DummyPostProcessor()

@@ -128,7 +128,7 @@ class EODataPostProcessor(PostProcessor):
     def get_names_of_required_bands(cls, data_type: str) -> List[str]:
         """
         :return: The list of names of the bands required by this post processor, given per data type. Input data is
-        expected to be passed in the order given by this list.
+        expected to be passed in the order given by this list.+ get_names_
         """
 
     @classmethod
@@ -155,4 +155,25 @@ class EODataPostProcessor(PostProcessor):
         :param observations: A Wrapper around earth observation data. Provides a convenience method to access EO Data.
         :param masks: Mask data used to mask out array cells during post-processing.
         :return: The result of the post processing
+        """
+
+
+class PostProcessorCreator(metaclass=ABCMeta):
+
+    @abstractmethod
+    def get_name(cls) -> str:
+        """
+        :return: the name of the postprocessor associated with this creator.
+        """
+
+    @abstractmethod
+    def get_description(cls) -> str:
+        """
+        :return: the description of the postprocessor associated with this creator.
+        """
+
+    @abstractmethod
+    def create_post_processor(cls) -> PostProcessor:
+        """
+        :return: An instance of the post processor associated with this creator.
         """
