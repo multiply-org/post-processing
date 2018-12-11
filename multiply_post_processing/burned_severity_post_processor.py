@@ -18,7 +18,9 @@ _SENTINEL_2_DICT = {'no_data': -9999, 'scale_factor': 1, 'version': '_3', 'nir':
 _LANDSAT_7_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _LANDSAT_8_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _DATA_DICTS = {DataTypeConstants.AWS_S2_L2: _SENTINEL_2_DICT}
-_INDICATOR_DESCRIPTION = IndicatorDescription('Burned Severity', 'The severity of the burned area')
+_INDICATOR_DESCRIPTION = IndicatorDescription('RBR', 'Relativized Burn ratio. Negative values indicate plant '
+                                                     'regeneration while positive values occur when there is loss or '
+                                                     'damage in the vegetation cover.')
 
 logging.getLogger().setLevel(logging.INFO)
 
