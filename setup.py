@@ -3,11 +3,15 @@
 from setuptools import setup
 
 requirements = [
-    'numpy'
+    'numpy',
+    'scipy',
+    'scikit-learn',
+    'shapely',
+    'gdal'
 ]
 
 __version__ = None
-with open('multiply_data_access/version.py') as f:
+with open('multiply_post_processing/version.py') as f:
     exec(f.read())
 
 setup(name='multiply-post-processing',
@@ -17,6 +21,8 @@ setup(name='multiply-post-processing',
       packages=['multiply_post_processing'],
       entry_points={
           'post_processor_creators': [
+              'burned_severity_post_processor_creator = '
+              'multiply_post_processing:burned_severity_post_processor.BurnedSeverityPostProcessorCreator',
           ],
       },
       install_requires=requirements

@@ -2,7 +2,7 @@ import numpy as np
 
 from abc import abstractmethod, ABCMeta
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from multiply_core.observations import ObservationsWrapper
 
@@ -149,7 +149,8 @@ class EODataPostProcessor(PostProcessor):
         """
 
     @abstractmethod
-    def process_observations(self, observations: ObservationsWrapper, masks: List[np.array]) -> List[np.array]:
+    def process_observations(self, observations: ObservationsWrapper, masks: Optional[List[np.array]] = None) \
+            -> List[np.array]:
         """
         Performs the post processing
         :param observations: A Wrapper around earth observation data. Provides a convenience method to access EO Data.
@@ -160,18 +161,21 @@ class EODataPostProcessor(PostProcessor):
 
 class PostProcessorCreator(metaclass=ABCMeta):
 
+    @classmethod
     @abstractmethod
     def get_name(cls) -> str:
         """
         :return: the name of the postprocessor associated with this creator.
         """
 
+    @classmethod
     @abstractmethod
     def get_description(cls) -> str:
         """
         :return: the description of the postprocessor associated with this creator.
         """
 
+    @classmethod
     @abstractmethod
     def create_post_processor(cls) -> PostProcessor:
         """
