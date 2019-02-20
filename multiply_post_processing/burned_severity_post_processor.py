@@ -18,9 +18,12 @@ _SENTINEL_2_DICT = {'no_data': -9999, 'scale_factor': 1, 'version': '_3', 'nir':
 _LANDSAT_7_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _LANDSAT_8_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _DATA_DICTS = {DataTypeConstants.AWS_S2_L2: _SENTINEL_2_DICT}
-_INDICATOR_DESCRIPTION = IndicatorDescription('RBR', 'Relativized Burn ratio. Negative values indicate plant '
-                                                     'regeneration while positive values occur when there is loss or '
-                                                     'damage in the vegetation cover.')
+_INDICATOR_DESCRIPTIONS = [IndicatorDescription('RBR', 'Relativized Burn ratio. Negative values indicate plant '
+                                                       'regeneration while positive values occur when there is loss or '
+                                                       'damage in the vegetation cover.'),
+                           IndicatorDescription('GeoCBI', 'Geometrically Structured Composite Burned Index. Values lie '
+                                                          'in the range of 0 (unburnt) and 3 (high severity).')
+                           ]
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -127,7 +130,7 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
     def process_eo_data(self, eo_data: List[np.array], masks: List[np.array]) -> List[np.array]:
         pass
 
-    def process_observations(self, observations: ObservationsWrapper, masks: Optional[List[np.array]] = None)\
+    def process_observations(self, observations: ObservationsWrapper, masks: Optional[List[np.array]] = None) \
             -> List[np.array]:
         # If we do not have exactly two observations of the same data type wrapped we'll exit.
         if len(observations.dates) != 2:
@@ -195,10 +198,10 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
         diff_nbr = nbr_0 - nbr_1
         diff_nbr *= burned_mask + no_data * np.invert(burned_mask)
         logging.info('Calculating RBR')
-        rbr = diff_nbr/(nbr_0 + 1.001)
+        rbr = diff_nbr / (nbr_0 + 1.001)
         rbr *= burned_mask + no_data * np.invert(burned_mask)
-        return [rbr]
-
+        geo_cbi = 2.80278 * rbr + 1.07541
+        return [rbr, geo_cbi]
 
     @classmethod
     def get_name(cls) -> str:
