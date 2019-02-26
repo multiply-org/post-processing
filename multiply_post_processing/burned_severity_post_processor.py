@@ -18,11 +18,14 @@ _SENTINEL_2_DICT = {'no_data': -9999, 'scale_factor': 1, 'version': '_3', 'nir':
 _LANDSAT_7_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _LANDSAT_8_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _DATA_DICTS = {DataTypeConstants.AWS_S2_L2: _SENTINEL_2_DICT}
-_INDICATOR_DESCRIPTIONS = [IndicatorDescription('RBR', 'Relativized Burn ratio. Negative values indicate plant '
-                                                       'regeneration while positive values occur when there is loss or '
-                                                       'damage in the vegetation cover.'),
-                           IndicatorDescription('GeoCBI', 'Geometrically Structured Composite Burned Index. Values lie '
-                                                          'in the range of 0 (unburnt) and 3 (high severity).')
+_INDICATOR_DESCRIPTIONS = [IndicatorDescription('GeoCBI', 'Geometrically Structured Composite Burned Index. It is a '
+                                                          'measure of burned severity fire in terms of the level of '
+                                                          'damage of vegetation and substrate after a wildfire is '
+                                                          'fully extinguished. GeoCBI is a modified version of CBI '
+                                                          'that takes into account the fraction of cover of the '
+                                                          'different vegetation strata used to compute the CBI. '
+                                                          'It takes continuous values ranging from 0 (unburned) '
+                                                          'to 3 (completely burned)')
                            ]
 
 logging.getLogger().setLevel(logging.INFO)
@@ -201,7 +204,7 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
         rbr = diff_nbr / (nbr_0 + 1.001)
         rbr *= burned_mask + no_data * np.invert(burned_mask)
         geo_cbi = 2.80278 * rbr + 1.07541
-        return [rbr, geo_cbi]
+        return [geo_cbi]
 
     @classmethod
     def get_name(cls) -> str:
@@ -213,7 +216,7 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
 
     @classmethod
     def get_indicator_descriptions(cls) -> List[IndicatorDescription]:
-        return [_INDICATOR_DESCRIPTION]
+        return _INDICATOR_DESCRIPTIONS
 
 
 class BurnedSeverityPostProcessorCreator(PostProcessorCreator):
