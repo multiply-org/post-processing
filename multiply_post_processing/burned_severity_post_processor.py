@@ -7,7 +7,7 @@ import numpy as np
 from multiply_core.observations import ObservationsWrapper, DataTypeConstants
 from multiply_post_processing import EODataPostProcessor, PostProcessorCreator, IndicatorDescription, PostProcessor
 
-__author__ = 'Tonio Fincke (Brockmann Consult GmbH), Gonzalo Otón & Magí Franquesa (Universidad de Álcala)'
+__author__ = 'Tonio Fincke (Brockmann Consult GmbH), Gonzalo Otón & Magí Franquesa (Universidad de Alcalá)'
 
 __NAME__ = 'BurnedSeverity'
 __DESCRIPTION__ = 'This post processor creates a burned area mask and ' \
