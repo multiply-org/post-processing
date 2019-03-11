@@ -5,7 +5,8 @@ from typing import List, Optional
 import numpy as np
 
 from multiply_core.observations import ObservationsWrapper, DataTypeConstants
-from multiply_post_processing import EODataPostProcessor, PostProcessorCreator, IndicatorDescription, PostProcessor
+from multiply_core.variables import get_registered_variable, Variable
+from multiply_post_processing import EODataPostProcessor, PostProcessorCreator, PostProcessor
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH), Gonzalo Otón & Magí Franquesa (Universidad de Alcalá)'
 
@@ -18,15 +19,8 @@ _SENTINEL_2_DICT = {'no_data': -9999, 'scale_factor': 1, 'version': '_3', 'nir':
 _LANDSAT_7_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _LANDSAT_8_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _DATA_DICTS = {DataTypeConstants.AWS_S2_L2: _SENTINEL_2_DICT}
-_INDICATOR_DESCRIPTIONS = [IndicatorDescription('GeoCBI', 'Geometrically Structured Composite Burned Index. It is a '
-                                                          'measure of burned severity fire in terms of the level of '
-                                                          'damage of vegetation and substrate after a wildfire is '
-                                                          'fully extinguished. GeoCBI is a modified version of CBI '
-                                                          'that takes into account the fraction of cover of the '
-                                                          'different vegetation strata used to compute the CBI. '
-                                                          'It takes continuous values ranging from 0 (unburned) '
-                                                          'to 3 (completely burned)')
-                           ]
+_INDICATOR_NAMES = ['geocbi']
+_INDICATOR_DESCRIPTIONS = [get_registered_variable('geocbi')]
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -213,7 +207,7 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
         return __DESCRIPTION__
 
     @classmethod
-    def get_indicator_descriptions(cls) -> List[IndicatorDescription]:
+    def get_indicator_descriptions(cls) -> List[Variable]:
         return _INDICATOR_DESCRIPTIONS
 
 
@@ -228,7 +222,7 @@ class BurnedSeverityPostProcessorCreator(PostProcessorCreator):
         return __DESCRIPTION__
 
     @classmethod
-    def get_indicator_descriptions(cls) -> List[IndicatorDescription]:
+    def get_indicator_descriptions(cls) -> List[Variable]:
         return _INDICATOR_DESCRIPTIONS
 
     @classmethod

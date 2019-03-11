@@ -6,30 +6,11 @@ from enum import Enum
 from typing import List, Optional
 
 from multiply_core.observations import ObservationsWrapper
+from multiply_core.variables import Variable
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 logging.getLogger().setLevel(logging.INFO)
-
-
-class IndicatorDescription:
-    """
-    A description of the indicator derived from post processing.
-    """
-
-    def __init__(self, name: str, description: str):
-        self._name = name
-        self._description = description
-
-    @property
-    def name(self):
-        """The name of the indicator"""
-        return self._name
-
-    @property
-    def description(self):
-        """A description of the indicator"""
-        return self._description
 
 
 class PostProcessorType(Enum):
@@ -54,12 +35,11 @@ class PostProcessor(metaclass=ABCMeta):
                     break
             logging.info('Indicator {} is not provided by post processor {}.'.format(indicator, self.get_name()))
 
-
-    @abstractmethod
-    def get_actual_indicators(self) -> IndicatorDescription:
+    def get_actual_indicators(self) -> Variable:
         """
         :return: The descriptions of the indicators that are actually computed by this post processor.
         """
+        return self.indicators
 
 
     @classmethod
@@ -85,7 +65,7 @@ class PostProcessor(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_indicator_descriptions(cls) -> List[IndicatorDescription]:
+    def get_indicator_descriptions(cls) -> List[Variable]:
         """
         :return: A list with the descriptions of the indicators this post processor creates.
         """
@@ -192,7 +172,7 @@ class PostProcessorCreator(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get_indicator_descriptions(cls) -> List[IndicatorDescription]:
+    def get_indicator_descriptions(cls) -> List[Variable]:
         """
         :return: A list with the descriptions of the indicators this post processor creates.
         """

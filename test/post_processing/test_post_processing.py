@@ -5,8 +5,9 @@ import os
 import shutil
 
 from multiply_core.util import FileRef
+from multiply_core.variables import Variable
 import multiply_post_processing
-from multiply_post_processing import IndicatorDescription, PostProcessorCreator, VariablePostProcessor
+from multiply_post_processing import PostProcessorCreator, VariablePostProcessor
 from multiply_post_processing.post_processing import _group_file_refs_by_date, _get_valid_files, run_post_processing
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
@@ -72,8 +73,12 @@ def test_get_valid_files():
     assert valid_files[5].url in expected_valid_file_paths
 
 
-_INDICATOR_DESCRIPTIONS = [IndicatorDescription("indicator_1", "expected"),
-                           IndicatorDescription("indicator_2", "unexpected")]
+_INDICATOR_DESCRIPTIONS = [Variable({'short_name': "indicator_1", 'display_name': "Indicator 1",
+                                     'unit': None, 'description': "expected", 'range': None,
+                                     'applications': None}),
+                           Variable({'short_name': "indicator_2", 'display_name': "Indicator 2",
+                                     'unit': None, 'description': "unexpected", 'range': None,
+                                     'applications': None})]
 
 
 def test_run_post_processing():
@@ -101,9 +106,6 @@ class DummyPostProcessor(VariablePostProcessor):
     def get_description(cls) -> str:
         return "A post processor for testing"
 
-    def get_actual_indicators(self) -> IndicatorDescription:
-        return self.indicators
-
     def get_names_of_required_variables(self) -> List[str]:
         required_variables = []
         if 'indicator_1' in self.indicators:
@@ -118,7 +120,7 @@ class DummyPostProcessor(VariablePostProcessor):
         return []
 
     @classmethod
-    def get_indicator_descriptions(cls) -> List[IndicatorDescription]:
+    def get_indicator_descriptions(cls) -> List[Variable]:
         return _INDICATOR_DESCRIPTIONS
 
     def process_variables(self, variable_data: dict, masks: Optional[np.array] = None) -> dict:
@@ -139,7 +141,7 @@ class DummyPostProcessorCreator(PostProcessorCreator):
         return DummyPostProcessor.get_description()
 
     @classmethod
-    def get_indicator_descriptions(cls) -> List[IndicatorDescription]:
+    def get_indicator_descriptions(cls) -> List[Variable]:
         return _INDICATOR_DESCRIPTIONS
 
     def create_post_processor(cls, indicators: List[str]) -> DummyPostProcessor:

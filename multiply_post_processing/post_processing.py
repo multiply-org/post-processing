@@ -42,8 +42,8 @@ def get_post_processors(indicator_names: List[str]) -> List[PostProcessor]:
         indicators = []
         indicator_descriptions = post_processor_creator.get_indicator_descriptions()
         for indicator_description in indicator_descriptions:
-            if indicator_description.name in indicator_names:
-                indicators.append(indicator_description.name)
+            if indicator_description.short_name in indicator_names:
+                indicators.append(indicator_description.short_name)
         if len(indicators) > 0:
             post_processors.append(post_processor_creator.create_post_processor(indicators))
     return post_processors
