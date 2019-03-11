@@ -19,7 +19,8 @@ from multiply_post_processing.post_processor import EODataPostProcessor, PostPro
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 POST_PROCESSOR_CREATOR_REGISTRY = []
-NAME_FORMAT = '{}_{}.tif'
+SINGLE_NAME_FORMAT = '{}_{}.tif'
+DOUBLE_NAME_FORMAT = '{}_{}_{}.tif'
 
 
 def add_post_processor_creator(post_processor_creator: PostProcessorCreator):
@@ -205,7 +206,8 @@ def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: 
     file_names = []
     for indicator_name in indicator_dict:
         results.append(indicator_dict[indicator_name])
-        file_names.append(os.path.join(output_path, NAME_FORMAT.format(indicator_name, file_refs[1].end_time)))
+        file_names.append(os.path.join(output_path, DOUBLE_NAME_FORMAT.format(indicator_name, file_refs[1].start_time,
+                                                                              file_refs[1].end_time)))
     _write(results, file_names, roi, spatial_resolution, roi_grid, destination_grid, output_format)
 
 
@@ -240,7 +242,7 @@ def _run_variable_post_processor(post_processor: VariablePostProcessor, data_pat
         file_names = []
         for indicator_name in indicator_dict:
             results.append(indicator_dict[indicator_name])
-            file_names.append(os.path.join(output_path, NAME_FORMAT.format(indicator_name, date)))
+            file_names.append(os.path.join(output_path, SINGLE_NAME_FORMAT.format(indicator_name, date)))
         _write(results, file_names, roi, spatial_resolution, roi_grid, destination_grid, output_format)
 
 
