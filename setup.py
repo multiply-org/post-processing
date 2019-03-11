@@ -24,6 +24,7 @@ setup(name='multiply-post-processing',
               'burned_severity_post_processor_creator = '
               'multiply_post_processing:burned_severity_post_processor.BurnedSeverityPostProcessorCreator',
           ],
+          'variables': ['indicators = multiply_post_processing.indicators:indicators.get_indicators']
       },
       install_requires=requirements
 )
