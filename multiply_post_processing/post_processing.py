@@ -7,18 +7,19 @@ import os
 import osr
 import pkg_resources
 
-from multiply_core.observations import GeoTiffWriter, ObservationsFactory, data_validation
+from multiply_core.observations import GeoTiffWriter, ObservationsFactory, data_validation, is_valid
 from multiply_core.util import FileRef, FileRefCreation, Reprojection, get_time_from_string
 from shapely.geometry import Polygon
 from shapely.wkt import loads
 from typing import List, Optional, Union
 
-from multiply_post_processing.post_processor import PostProcessor, PostProcessorCreator, PostProcessorType
-
+from multiply_post_processing.post_processor import EODataPostProcessor, PostProcessor, PostProcessorCreator, \
+    PostProcessorType, VariablePostProcessor
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 POST_PROCESSOR_CREATOR_REGISTRY = []
+NAME_FORMAT = '{}_{}.tif'
 
 
 def add_post_processor_creator(post_processor_creator: PostProcessorCreator):
@@ -29,6 +30,23 @@ registered_post_processor_creators = pkg_resources.iter_entry_points('post_proce
 for registered_post_processor_creator in registered_post_processor_creators:
     add_post_processor_creator(registered_post_processor_creator.load())
     POST_PROCESSOR_CREATOR_REGISTRY.append(registered_post_processor_creator.load())
+
+
+def get_post_processors(indicator_names: List[str]) -> List[PostProcessor]:
+    """
+    :param indicator_names: Names of the indicators that shall be derived.
+    :return: The post processors that can be used to derive the designated indicators.
+    """
+    post_processors = []
+    for post_processor_creator in POST_PROCESSOR_CREATOR_REGISTRY:
+        indicators = []
+        indicator_descriptions = post_processor_creator.get_indicator_descriptions()
+        for indicator_description in indicator_descriptions:
+            if indicator_description.name in indicator_names:
+                indicators.append(indicator_description.name)
+        if len(indicators) > 0:
+            post_processors.append(post_processor_creator.create_post_processor(indicators))
+    return post_processors
 
 
 def get_post_processor_names() -> List[str]:
@@ -64,13 +82,14 @@ def get_post_processor(name: str) -> PostProcessor:
 
 
 # todo almost the same method is included in inference engine. Move it to core as part of the observations factory.
-def _get_valid_files(datasets_dir: str, supported_eo_data_types: Optional[List[str]] = []) -> FileRef:
+def _get_valid_files(datasets_dir: str, data_types: Optional[List[str]] = []) -> List[FileRef]:
     file_refs = []
     file_ref_creation = FileRefCreation()
     found_files = glob.glob(datasets_dir + '/**', recursive=True)
     for found_file in found_files:
+        found_file = found_file.replace('\\', '/')
         type = data_validation.get_valid_type(found_file)
-        if (len(supported_eo_data_types) > 0 and type in supported_eo_data_types) or type is not '':
+        if len(data_types) > 0 and type in data_types:
             file_ref = file_ref_creation.get_file_ref(type, found_file)
             if file_ref is not None:
                 file_refs.append(file_ref)
@@ -137,42 +156,120 @@ def _get_dummy_data_set():
     return dataset
 
 
+def run_post_processing(indicator_names: List[str], data_path: str, output_path: str,
+                        roi: Optional[Union[str, Polygon]],
+                        spatial_resolution: Optional[int],
+                        roi_grid: Optional[str],
+                        destination_grid: Optional[str],
+                        output_format: Optional[str] = 'GeoTiff'):
+    post_processors = get_post_processors(indicator_names)
+    for post_processor in post_processors:
+        run_actual_post_processor(post_processor, data_path, output_path, roi, spatial_resolution, roi_grid,
+                                  destination_grid, output_format)
+
+
 def run_post_processor(name: str, data_path: str, output_path: str,
                        roi: Optional[Union[str, Polygon]],
                        spatial_resolution: Optional[int],
                        roi_grid: Optional[str],
                        destination_grid: Optional[str],
                        output_format: Optional[str] = 'GeoTiff'):
-    post_processor = get_post_processor(name)
-    if output_format is None:
-        output_format = 'GeoTiff'
+    run_actual_post_processor(get_post_processor(name), data_path, output_path, roi, spatial_resolution, roi_grid,
+                              destination_grid, output_format)
+
+
+# noinspection PyTypeChecker
+def run_actual_post_processor(post_processor: PostProcessor, data_path: str, output_path: str,
+                              roi: Optional[Union[str, Polygon]], spatial_resolution: Optional[int],
+                              roi_grid: Optional[str], destination_grid: Optional[str],
+                              output_format: Optional[str] = 'GeoTiff'):
     if post_processor.get_type() == PostProcessorType.EO_DATA_POST_PROCESSOR:
-        post_processor.initialize()
-        # collect input data
-        supported_eo_data_types = post_processor.get_names_of_supported_eo_data_types()
-        file_refs = _get_valid_files(data_path, supported_eo_data_types)
-        observations_factory = ObservationsFactory()
-        observations_factory.sort_file_ref_list(file_refs)
-        reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
-        # an observations wrapper to be passed to kafka
-        observations = observations_factory.create_observations(file_refs)
-        results = post_processor.process_observations(observations)
-        descriptions = post_processor.get_indicator_descriptions()
+        _run_eo_data_post_processor(post_processor, data_path, output_path, roi, spatial_resolution, roi_grid,
+                                    destination_grid, output_format)
+    elif post_processor.get_type() == PostProcessorType.VARIABLE_POST_PROCESSOR:
+        _run_variable_post_processor(post_processor, data_path, output_path, roi, spatial_resolution, roi_grid,
+                                    destination_grid, output_format)
+
+
+def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: str, output_path: str,
+                                roi: Optional[Union[str, Polygon]], spatial_resolution: Optional[int],
+                                roi_grid: Optional[str], destination_grid: Optional[str],
+                                output_format: Optional[str] = 'GeoTiff'):
+    supported_eo_data_types = post_processor.get_names_of_supported_eo_data_types()
+    file_refs = _get_valid_files(data_path, supported_eo_data_types)
+    observations_factory = ObservationsFactory()
+    observations_factory.sort_file_ref_list(file_refs)
+    observations = observations_factory.create_observations(file_refs)
+    indicator_dict = post_processor.process_observations(observations)
+    results = []
+    file_names = []
+    for indicator_name in indicator_dict:
+        results.append(indicator_dict[indicator_name])
+        file_names.append(os.path.join(output_path, NAME_FORMAT.format(indicator_name, file_refs[1].end_time)))
+    _write(results, file_names, roi, spatial_resolution, roi_grid, destination_grid, output_format)
+
+
+def _run_variable_post_processor(post_processor: VariablePostProcessor, data_path: str, output_path: str,
+                                roi: Optional[Union[str, Polygon]], spatial_resolution: Optional[int],
+                                roi_grid: Optional[str], destination_grid: Optional[str],
+                                output_format: Optional[str] = 'GeoTiff'):
+    names_of_required_variables = post_processor.get_names_of_required_variables()
+    file_refs = _get_valid_files(data_path, names_of_required_variables)
+    file_ref_groups = _group_file_refs_by_date(file_refs)
+    reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
+    for date in file_ref_groups:
+        data_files = {}
+        file_refs_for_date = file_ref_groups[date]
+        for name_of_required_variable in names_of_required_variables:
+            variable_available = False
+            for file_ref in file_refs_for_date:
+                if is_valid(file_ref.url, name_of_required_variable):
+                    data_files[name_of_required_variable] = file_ref.url
+                    variable_available = True
+                    break
+            if not variable_available:
+                logging.warning('Required variable {} not provided for {}. Skip.'.format(name_of_required_variable, date))
+                break
+        variable_data = {}
+        for name_of_required_variable in data_files:
+            dataset = gdal.Open(data_files[name_of_required_variable])
+            reprojected_data_set = reprojection.reproject(dataset)
+            variable_data[name_of_required_variable] = reprojected_data_set.GetRasterBand(1).ReadAsArray()
+        indicator_dict = post_processor.process_variables(variable_data)
+        results = []
         file_names = []
-        for description in descriptions:
-            file_names.append(os.path.join(output_path, description.name))
-        if output_format == 'GeoTiff':
-            reprojected_data_set = reprojection.reproject(_get_dummy_data_set())
-            width = reprojected_data_set.RasterXSize
-            height = reprojected_data_set.RasterYSize
-            geo_transform = reprojected_data_set.GetGeoTransform()
-            srs = reprojection.get_destination_srs()
-            projection = srs.ExportToWkt()
-            writer = GeoTiffWriter(file_names, geo_transform, projection, width, height, None, None)
-            writer.write(results)
-            writer.close()
-        else:
-            logging.warning('Writer {} not supported. Can not write post-processing results.'.format(output_format))
+        for indicator_name in indicator_dict:
+            results.append(indicator_dict[indicator_name])
+            file_names.append(os.path.join(output_path, NAME_FORMAT.format(indicator_name, date)))
+        _write(results, file_names, roi, spatial_resolution, roi_grid, destination_grid, output_format)
+
+
+def _group_file_refs_by_date(file_refs: List[FileRef]) -> dict:
+    # Note: This function relies on the assumption that for a variable, start and end time are equal and refer to a day
+    file_ref_groups = {}
+    for file_ref in file_refs:
+        if file_ref.start_time not in file_ref_groups:
+            file_ref_groups[file_ref.start_time] = []
+        file_ref_groups[file_ref.start_time].append(file_ref)
+    return file_ref_groups
+
+
+def _write(indicators: List[np.array], file_names: List[str], roi: Optional[Union[str, Polygon]],
+           spatial_resolution: Optional[int], roi_grid: Optional[str], destination_grid: Optional[str],
+           output_format: Optional[str] = 'GeoTiff'):
+    reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
+    if output_format == 'GeoTiff':
+        reprojected_data_set = reprojection.reproject(_get_dummy_data_set())
+        width = reprojected_data_set.RasterXSize
+        height = reprojected_data_set.RasterYSize
+        geo_transform = reprojected_data_set.GetGeoTransform()
+        srs = reprojection.get_destination_srs()
+        projection = srs.ExportToWkt()
+        writer = GeoTiffWriter(file_names, geo_transform, projection, width, height, None, None)
+        writer.write(indicators)
+        writer.close()
+    else:
+        logging.warning('Writing of {} not supported. Can not write post-processing results.'.format(output_format))
 
 
 if __name__ == '__main__':
@@ -180,7 +277,7 @@ if __name__ == '__main__':
     parser.add_argument('-n', "--name", help='The name of the post-processor', required=True)
     parser.add_argument("-i", "--input_path", help="The directory where the input data is located.", required=True)
     parser.add_argument("-o", "--output_path", help="The output directory to which the output file shall be "
-                                                         "written.", required=True)
+                                                    "written.", required=True)
     parser.add_argument("-f", "--format", help="The output format (default is GeoTiff).")
     parser.add_argument("-roi", "--roi", help="The region of interest describing the area to be retrieved. Not "
                                               "required if 'state_mask' is given.")

@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 
 from abc import abstractmethod, ABCMeta
@@ -7,6 +8,8 @@ from typing import List, Optional
 from multiply_core.observations import ObservationsWrapper
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 class IndicatorDescription:
@@ -41,6 +44,24 @@ class PostProcessor(metaclass=ABCMeta):
     EODataPostprocessor.
     """
 
+    def __init__(self, indicators: List[str]):
+        indicator_descriptions = self.get_indicator_descriptions()
+        self.indicators = []
+        for indicator in indicators:
+            for indicator_description in indicator_descriptions:
+                if indicator_description == indicator_description:
+                    self.indicators.append(indicator)
+                    break
+            logging.info('Indicator {} is not provided by post processor {}.'.format(indicator, self.get_name()))
+
+
+    @abstractmethod
+    def get_actual_indicators(self) -> IndicatorDescription:
+        """
+        :return: The descriptions of the indicators that are actually computed by this post processor.
+        """
+
+
     @classmethod
     @abstractmethod
     def get_type(cls) -> PostProcessorType:
@@ -69,12 +90,6 @@ class PostProcessor(metaclass=ABCMeta):
         :return: A list with the descriptions of the indicators this post processor creates.
         """
 
-    @abstractmethod
-    def initialize(self):
-        """
-        Does any preparation work to be done before post processing is applied.
-        """
-
 
 class VariablePostProcessor(PostProcessor):
     """A base class for Post Processors that operate on bio-physical variables."""
@@ -100,7 +115,7 @@ class VariablePostProcessor(PostProcessor):
         """
 
     @abstractmethod
-    def process_variables(self, variable_data: List[np.array], masks: List[np.array]) -> List[np.array]:
+    def process_variables(self, variable_data: dict, masks: Optional[np.array] = None) -> dict:
         """
         Performs the post processing
         :param variable_data: The input data required to perform the post processing
@@ -150,7 +165,7 @@ class EODataPostProcessor(PostProcessor):
 
     @abstractmethod
     def process_observations(self, observations: ObservationsWrapper, masks: Optional[List[np.array]] = None) \
-            -> List[np.array]:
+            -> dict:
         """
         Performs the post processing
         :param observations: A Wrapper around earth observation data. Provides a convenience method to access EO Data.
@@ -177,7 +192,15 @@ class PostProcessorCreator(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def create_post_processor(cls) -> PostProcessor:
+    def get_indicator_descriptions(cls) -> List[IndicatorDescription]:
         """
+        :return: A list with the descriptions of the indicators this post processor creates.
+        """
+
+    @classmethod
+    @abstractmethod
+    def create_post_processor(cls, indicators: List[str]) -> PostProcessor:
+        """
+        :param indicators: The indicators that shall be derived using this post processor.
         :return: An instance of the post processor associated with this creator.
         """

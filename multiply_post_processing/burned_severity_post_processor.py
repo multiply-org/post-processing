@@ -107,9 +107,6 @@ def mask_values(array, NoData):
 
 class BurnedSeverityPostProcessor(EODataPostProcessor):
 
-    def initialize(self):
-        pass
-
     @classmethod
     def get_names_of_supported_eo_data_types(cls) -> List[str]:
         return [DataTypeConstants.AWS_S2_L2]
@@ -134,7 +131,7 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
         pass
 
     def process_observations(self, observations: ObservationsWrapper, masks: Optional[List[np.array]] = None) \
-            -> List[np.array]:
+            -> dict:
         # If we do not have exactly two observations of the same data type wrapped we'll exit.
         if len(observations.dates) != 2:
             logging.info("Not exactly two observations provided. Exiting.")
@@ -204,7 +201,8 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
         rbr = diff_nbr / (nbr_0 + 1.001)
         rbr *= burned_mask + no_data * np.invert(burned_mask)
         geo_cbi = 2.80278 * rbr + 1.07541
-        return [geo_cbi]
+        results = {'geocbi': geo_cbi}
+        return results
 
     @classmethod
     def get_name(cls) -> str:
@@ -230,5 +228,9 @@ class BurnedSeverityPostProcessorCreator(PostProcessorCreator):
         return __DESCRIPTION__
 
     @classmethod
-    def create_post_processor(cls) -> PostProcessor:
-        return BurnedSeverityPostProcessor()
+    def get_indicator_descriptions(cls) -> List[IndicatorDescription]:
+        return _INDICATOR_DESCRIPTIONS
+
+    @classmethod
+    def create_post_processor(cls, indicators: List[str]) -> PostProcessor:
+        return BurnedSeverityPostProcessor(indicators)
