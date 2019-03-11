@@ -70,6 +70,13 @@ class PostProcessor(metaclass=ABCMeta):
         :return: A list with the descriptions of the indicators this post processor creates.
         """
 
+    @classmethod
+    @abstractmethod
+    def get_num_time_steps(cls) -> int:
+        """
+        :return: The number of time steps this post processor requires.
+        """
+
 
 class VariablePostProcessor(PostProcessor):
     """A base class for Post Processors that operate on bio-physical variables."""

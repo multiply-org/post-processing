@@ -99,6 +99,10 @@ def test_run_post_processing():
 class DummyPostProcessor(VariablePostProcessor):
 
     @classmethod
+    def get_num_time_steps(cls) -> int:
+        return 1
+
+    @classmethod
     def get_name(cls) -> str:
         return "dummy"
 

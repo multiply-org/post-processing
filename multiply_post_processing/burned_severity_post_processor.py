@@ -102,6 +102,10 @@ def mask_values(array, NoData):
 class BurnedSeverityPostProcessor(EODataPostProcessor):
 
     @classmethod
+    def get_num_time_steps(cls) -> int:
+        return 2
+
+    @classmethod
     def get_names_of_supported_eo_data_types(cls) -> List[str]:
         return [DataTypeConstants.AWS_S2_L2]
 
