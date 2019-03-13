@@ -23,6 +23,8 @@ setup(name='multiply-post-processing',
           'post_processor_creators': [
               'burned_severity_post_processor_creator = '
               'multiply_post_processing:burned_severity_post_processor.BurnedSeverityPostProcessorCreator',
+              'functional_diversity_metrics_creator = multiply_post_processing:'
+              'functional_diversity_metrics_post_processor.FunctionalDiversityMetricsPostProcessorCreator'
           ],
           'variables': ['indicators = multiply_post_processing.indicators:indicators.get_indicators']
       },
