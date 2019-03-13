@@ -98,29 +98,28 @@ def _get_valid_files(datasets_dir: str, data_types: Optional[List[str]] = []) ->
 
 
 # todo almost the same method is included in inference engine. Find way to harmonize
-def _get_reprojection(spatial_resolution: Optional[int] = None, roi: Optional[Union[str, Polygon]] = None,
-                      roi_grid: Optional[str] = None, destination_grid: Optional[str] = None) -> Reprojection:
-    if roi is not None and spatial_resolution is not None:
-        if type(roi) is str:
-            roi = loads(roi)
-        roi_bounds = roi.bounds
-        roi_center = roi.centroid
-        roi_srs = _get_reference_system(roi_grid)
-        destination_srs = _get_reference_system(destination_grid)
-        wgs84_srs = _get_reference_system('EPSG:4326')
-        if roi_srs is None:
-            if destination_srs is None:
-                roi_srs = wgs84_srs
-                destination_srs = _get_projected_srs(roi_center)
-            else:
-                roi_srs = destination_srs
-        elif destination_srs is None:
-            if roi_srs.IsSame(wgs84_srs):
-                destination_srs = _get_projected_srs(roi_center)
-            else:
-                raise ValueError('Cannot derive destination grid for roi grid {}. Please specify destination grid'.
-                                 format(roi_grid))
-        return Reprojection(roi_bounds, spatial_resolution, spatial_resolution, destination_srs, roi_srs)
+def _get_reprojection(spatial_resolution: int, roi: Union[str, Polygon], roi_grid: Optional[str] = None,
+                      destination_grid: Optional[str] = None) -> Reprojection:
+    if type(roi) is str:
+        roi = loads(roi)
+    roi_bounds = roi.bounds
+    roi_center = roi.centroid
+    roi_srs = _get_reference_system(roi_grid)
+    destination_srs = _get_reference_system(destination_grid)
+    wgs84_srs = _get_reference_system('EPSG:4326')
+    if roi_srs is None:
+        if destination_srs is None:
+            roi_srs = wgs84_srs
+            destination_srs = _get_projected_srs(roi_center)
+        else:
+            roi_srs = destination_srs
+    elif destination_srs is None:
+        if roi_srs.IsSame(wgs84_srs):
+            destination_srs = _get_projected_srs(roi_center)
+        else:
+            raise ValueError('Cannot derive destination grid for roi grid {}. Please specify destination grid'.
+                             format(roi_grid))
+    return Reprojection(roi_bounds, spatial_resolution, spatial_resolution, destination_srs, roi_srs)
 
 
 # todo the same method is included in inference engine. Find way to harmonize
@@ -157,11 +156,8 @@ def _get_dummy_data_set():
     return dataset
 
 
-def run_post_processing(indicator_names: List[str], data_path: str, output_path: str,
-                        roi: Optional[Union[str, Polygon]],
-                        spatial_resolution: Optional[int],
-                        roi_grid: Optional[str],
-                        destination_grid: Optional[str],
+def run_post_processing(indicator_names: List[str], data_path: str, output_path: str, roi: Union[str, Polygon],
+                        spatial_resolution: int, roi_grid: Optional[str], destination_grid: Optional[str],
                         output_format: Optional[str] = 'GeoTiff'):
     post_processors = get_post_processors(indicator_names)
     for post_processor in post_processors:
@@ -169,11 +165,8 @@ def run_post_processing(indicator_names: List[str], data_path: str, output_path:
                                   destination_grid, output_format)
 
 
-def run_post_processor(name: str, data_path: str, output_path: str,
-                       roi: Optional[Union[str, Polygon]],
-                       spatial_resolution: Optional[int],
-                       roi_grid: Optional[str],
-                       destination_grid: Optional[str],
+def run_post_processor(name: str, data_path: str, output_path: str, roi: Union[str, Polygon],
+                       spatial_resolution: int, roi_grid: Optional[str], destination_grid: Optional[str],
                        output_format: Optional[str] = 'GeoTiff'):
     run_actual_post_processor(get_post_processor(name), data_path, output_path, roi, spatial_resolution, roi_grid,
                               destination_grid, output_format)
@@ -181,9 +174,8 @@ def run_post_processor(name: str, data_path: str, output_path: str,
 
 # noinspection PyTypeChecker
 def run_actual_post_processor(post_processor: PostProcessor, data_path: str, output_path: str,
-                              roi: Optional[Union[str, Polygon]], spatial_resolution: Optional[int],
-                              roi_grid: Optional[str], destination_grid: Optional[str],
-                              output_format: Optional[str] = 'GeoTiff'):
+                              roi: Union[str, Polygon], spatial_resolution: int, roi_grid: Optional[str],
+                              destination_grid: Optional[str], output_format: Optional[str] = 'GeoTiff'):
     if post_processor.get_type() == PostProcessorType.EO_DATA_POST_PROCESSOR:
         _run_eo_data_post_processor(post_processor, data_path, output_path, roi, spatial_resolution, roi_grid,
                                     destination_grid, output_format)
@@ -193,9 +185,8 @@ def run_actual_post_processor(post_processor: PostProcessor, data_path: str, out
 
 
 def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: str, output_path: str,
-                                roi: Optional[Union[str, Polygon]], spatial_resolution: Optional[int],
-                                roi_grid: Optional[str], destination_grid: Optional[str],
-                                output_format: Optional[str] = 'GeoTiff'):
+                                roi: Union[str, Polygon], spatial_resolution: int, roi_grid: Optional[str],
+                                destination_grid: Optional[str], output_format: Optional[str] = 'GeoTiff'):
     supported_eo_data_types = post_processor.get_names_of_supported_eo_data_types()
     file_refs = _get_valid_files(data_path, supported_eo_data_types)
     observations_factory = ObservationsFactory()
@@ -212,9 +203,8 @@ def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: 
 
 
 def _run_variable_post_processor(post_processor: VariablePostProcessor, data_path: str, output_path: str,
-                                roi: Optional[Union[str, Polygon]], spatial_resolution: Optional[int],
-                                roi_grid: Optional[str], destination_grid: Optional[str],
-                                output_format: Optional[str] = 'GeoTiff'):
+                                roi: Union[str, Polygon], spatial_resolution: int, roi_grid: Optional[str],
+                                 destination_grid: Optional[str], output_format: Optional[str] = 'GeoTiff'):
     names_of_required_variables = post_processor.get_names_of_required_variables()
     file_refs = _get_valid_files(data_path, names_of_required_variables)
     file_ref_groups = _group_file_refs_by_date(file_refs)
@@ -256,9 +246,8 @@ def _group_file_refs_by_date(file_refs: List[FileRef]) -> dict:
     return file_ref_groups
 
 
-def _write(indicators: List[np.array], file_names: List[str], roi: Optional[Union[str, Polygon]],
-           spatial_resolution: Optional[int], roi_grid: Optional[str], destination_grid: Optional[str],
-           output_format: Optional[str] = 'GeoTiff'):
+def _write(indicators: List[np.array], file_names: List[str], roi: Union[str, Polygon], spatial_resolution: int,
+           roi_grid: Optional[str], destination_grid: Optional[str], output_format: Optional[str] = 'GeoTiff'):
     reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
     if output_format == 'GeoTiff':
         reprojected_data_set = reprojection.reproject(_get_dummy_data_set())
