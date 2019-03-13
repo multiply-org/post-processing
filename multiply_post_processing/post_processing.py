@@ -9,6 +9,7 @@ import pkg_resources
 
 from multiply_core.observations import GeoTiffWriter, ObservationsFactory, data_validation, is_valid
 from multiply_core.util import FileRef, FileRefCreation, Reprojection, get_time_from_string
+from multiply_core.variables import Variable
 from shapely.geometry import Polygon
 from shapely.wkt import loads
 from typing import List, Optional, Union
@@ -80,6 +81,19 @@ def get_post_processor(name: str) -> PostProcessor:
         if name == post_processor_creator.get_name():
             return post_processor_creator.create_post_processor()
     raise ValueError('No post processor with name {} found.'.format(name))
+
+
+def get_available_indicators() -> List[Variable]:
+    """
+    :return: the names of the indicators that can be derived using one of the registered post processors.
+    """
+    indicator_descriptions = []
+    for post_processor_creator in POST_PROCESSOR_CREATOR_REGISTRY:
+        post_processor_indicator_descriptions = post_processor_creator.get_indicator_descriptions()
+        for indicator_description in post_processor_indicator_descriptions:
+            if indicator_description not in indicator_descriptions:
+                indicator_descriptions.append(indicator_description)
+    return indicator_descriptions
 
 
 # todo almost the same method is included in inference engine. Move it to core as part of the observations factory.
