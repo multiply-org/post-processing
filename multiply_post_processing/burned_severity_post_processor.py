@@ -14,7 +14,7 @@ __NAME__ = 'BurnedSeverity'
 __DESCRIPTION__ = 'This post processor creates a burned area mask and ' \
                   'as a second step it determines its severity using RBR.'
 
-_SENTINEL_2_DICT = {'no_data': -9999, 'scale_factor': 1, 'version': '_3', 'nir': 'B8A_sur.tif',
+_SENTINEL_2_DICT = {'no_data': -9999,'scale_factor': 0.0001, 'version': '_3', 'nir': 'B8A_sur.tif',
                     'smir': 'B11_sur.tif', 'swir': 'B12_sur.tif'}
 _LANDSAT_7_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _LANDSAT_8_DICT = {'scale_factor': 0.0001, 'version': '_1'}
@@ -92,6 +92,8 @@ def calc_nbr2(smir, swir, Mask, no_data: float, scale_factor: float):
 
 
 def mask_values(array, NoData):
+    if np.max(array) == NoData:
+        return NoData
     y = np.ma.masked_values(array, NoData)
     mean = y.mean()
 
@@ -140,16 +142,24 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
             logging.warning('Found types of different data. Cannot determine burned severity. Exiting.')
             return [np.array([], dtype=np.float64)]
         data_dict = self._get_data_dict(data_type)
-        observations.set_no_data_value(observations.dates[0], data_dict['smir'], data_dict['no_data'])
-        observations.set_no_data_value(observations.dates[0], data_dict['swir'], data_dict['no_data'])
-        observations.set_no_data_value(observations.dates[1], data_dict['smir'], data_dict['no_data'])
-        observations.set_no_data_value(observations.dates[1], data_dict['swir'], data_dict['no_data'])
+        no_data = data_dict['no_data']
+        scale_factor = data_dict['scale_factor']
+        observations.set_no_data_value(observations.dates[0], data_dict['smir'], no_data * scale_factor)
+        observations.set_no_data_value(observations.dates[0], data_dict['swir'], no_data * scale_factor)
+        observations.set_no_data_value(observations.dates[1], data_dict['smir'], no_data * scale_factor)
+        observations.set_no_data_value(observations.dates[1], data_dict['swir'], no_data * scale_factor)
         smir_0 = observations.get_band_data_by_name(observations.dates[0], data_dict['smir'], False).observations
         swir_0 = observations.get_band_data_by_name(observations.dates[0], data_dict['swir'], False).observations
         smir_1 = observations.get_band_data_by_name(observations.dates[1], data_dict['smir'], False).observations
         swir_1 = observations.get_band_data_by_name(observations.dates[1], data_dict['swir'], False).observations
-        no_data = data_dict['no_data']
-        scale_factor = data_dict['scale_factor']
+        smir_0 /= scale_factor
+        smir_1 /= scale_factor
+        swir_0 /= scale_factor
+        swir_1 /= scale_factor
+        smir_0 = smir_0.astype(np.int)
+        smir_1 = smir_1.astype(np.int)
+        swir_0 = swir_0.astype(np.int)
+        swir_1 = swir_1.astype(np.int)
         logging.info('Calculating SWIR/SMIR Mask')
         swir_mask = (swir_1 != no_data) * (swir_0 != no_data)
         smir_mask = (smir_1 != no_data) * (smir_0 != no_data)
@@ -168,10 +178,14 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
         logging.info('Calculating difNBR2')
         diff_nbr2 = nbr2_1 - nbr2_0
         diff_nbr2 = diff_nbr2 * s_mask + no_data * np.invert(s_mask)
-        observations.set_no_data_value(observations.dates[0], data_dict['nir'], data_dict['no_data'])
-        observations.set_no_data_value(observations.dates[1], data_dict['nir'], data_dict['no_data'])
+        observations.set_no_data_value(observations.dates[0], data_dict['nir'], no_data * scale_factor)
+        observations.set_no_data_value(observations.dates[1], data_dict['nir'], no_data * scale_factor)
         nir_0 = observations.get_band_data_by_name(observations.dates[0], data_dict['nir'], False).observations
         nir_1 = observations.get_band_data_by_name(observations.dates[1], data_dict['nir'], False).observations
+        nir_0 /= scale_factor
+        nir_1 /= scale_factor
+        nir_0 = nir_0.astype(np.int)
+        nir_1 = nir_1.astype(np.int)
         logging.info('Calculating NIR Mask')
         nir_mask = (nir_1 != no_data) * (nir_0 != no_data)
         logging.info('Calculating NIR')
@@ -193,12 +207,13 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
         nbr_1 = calc_nbr(swir_1, nir_1, burned_mask, no_data, scale_factor)
         nbr_0 = calc_nbr(swir_0, nir_0, burned_mask, no_data, scale_factor)
         logging.info('Calculating difNBR')
-        diff_nbr = nbr_0 - nbr_1
-        diff_nbr *= burned_mask + no_data * np.invert(burned_mask)
+        diff_nbr = (nbr_0 - nbr_1) * burned_mask + no_data * np.invert(burned_mask)
         logging.info('Calculating RBR')
         rbr = diff_nbr / (nbr_0 + 1.001)
-        rbr *= burned_mask + no_data * np.invert(burned_mask)
-        geo_cbi = 2.80278 * rbr + 1.07541
+        rbr = rbr * burned_mask + no_data * np.invert(burned_mask)
+        geo_cbi = rbr
+        geo_cbi[geo_cbi != no_data] *= 2.80278
+        geo_cbi[geo_cbi != no_data] += 1.07541
         results = {'geocbi': geo_cbi}
         return results
 
@@ -230,5 +245,5 @@ class BurnedSeverityPostProcessorCreator(PostProcessorCreator):
         return _INDICATOR_DESCRIPTIONS
 
     @classmethod
-    def create_post_processor(cls, indicators: List[str]) -> PostProcessor:
-        return BurnedSeverityPostProcessor(indicators)
+    def create_post_processor(cls, indicator_names: List[str]) -> PostProcessor:
+        return BurnedSeverityPostProcessor(indicator_names)
