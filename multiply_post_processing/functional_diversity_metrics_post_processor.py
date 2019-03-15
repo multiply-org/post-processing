@@ -54,7 +54,7 @@ def _pre_process_trait(trait: np.array) -> np.array:
 class FunctionalDiversityMetricsFunction(metaclass=ABCMeta):
 
     def __init__(self, rows: int, cols: int, x_offset: int, y_offset: int):
-        self._array = np.empty((rows, cols), dtype=np.float, order='C')
+        self._array = np.full((rows, cols), _NO_DATA_VALUE, dtype=np.float, order='C')
         self._x_offset = x_offset
         self._y_offset = y_offset
 
@@ -92,7 +92,7 @@ class CVHFunction(FunctionalDiversityMetricsFunction):
     def _func(self, traits: np.array) -> np.float:
         try:
             return spatial.ConvexHull(traits).volume
-        except spatial.QhullError:
+        except:
             return _NO_DATA_VALUE
 
 
@@ -123,7 +123,10 @@ class FEFunction(FunctionalDiversityMetricsFunction):
         mstmat = mintree.toarray().astype(float)
         mstpasser = mstmat == 0
         mst = mstmat[~mstpasser]
-        ss = np.zeros(np.shape(mst))
+        mst_shape = np.shape(mst)
+        if np.shape(mst)[0] == 0:
+            return _NO_DATA_VALUE
+        ss = np.zeros(mst_shape)
         ss = (1 / (ss + len(mst)))
         PEW = (mst / np.sum(mst))
         return np.mean((np.sum(np.minimum(PEW, ss)) - ss[0]) / (1 - ss[0]))
@@ -144,7 +147,7 @@ class FDIVFunction(FunctionalDiversityMetricsFunction):
             for i in range(len(traits)):
                 eucdist[i] = spatial.distance.euclidean(traits[i], centroid)
             return np.mean(eucdist)
-        except spatial.QhullError:
+        except:
             return _NO_DATA_VALUE
 
 
@@ -167,8 +170,8 @@ def _process(a_lai: np.array, a_cab: np.array, a_cw: np.array, indicator_names: 
     y_size = 10
     x_offset = 5
     y_offset = 5
-    columns = a_lai.shape[0]
-    rows = a_lai.shape[1]
+    rows = a_lai.shape[0]
+    columns = a_lai.shape[1]
 
     functions = _get_functions(indicator_names, rows, columns, x_offset, y_offset)
 
@@ -188,7 +191,7 @@ def _process(a_lai: np.array, a_cab: np.array, a_cw: np.array, indicator_names: 
             # arrange data#
             traitslist = np.array([np.concatenate(r_cab), np.concatenate(r_cw), np.concatenate(r_lai)])
             # EXCLUDE MISSING VALUES / NaN FROM ANALYSIS ##
-            est = traitslist[traitslist != _NO_DATA_VALUE]
+            est = traitslist[~np.isnan(traitslist)]
             lengthr = int(len(est) / 3)
             est = np.reshape(est, (3, lengthr))
             # kernel density estimates to define outliers
@@ -261,5 +264,5 @@ class FunctionalDiversityMetricsPostProcessorCreator(PostProcessorCreator):
         return _INDICATOR_DESCRIPTIONS
 
     @classmethod
-    def create_post_processor(cls, indicators: List[str]) -> PostProcessor:
-        return FunctionalDiversityMetricsPostProcessor(indicators)
+    def create_post_processor(cls, indicator_names: List[str]) -> PostProcessor:
+        return FunctionalDiversityMetricsPostProcessor(indicator_names)
