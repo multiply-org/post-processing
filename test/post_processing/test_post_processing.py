@@ -73,11 +73,11 @@ def test_get_valid_files():
     assert valid_files[5].url in expected_valid_file_paths
 
 
-_INDICATOR_DESCRIPTIONS = [Variable({'short_name': "indicator_1", 'display_name': "Indicator 1",
-                                     'unit': None, 'description': "expected", 'range': None,
-                                     'applications': None}),
-                           Variable({'short_name': "indicator_2", 'display_name': "Indicator 2",
+_INDICATOR_DESCRIPTIONS = [Variable({'short_name': "indicator_2", 'display_name': "Indicator 2",
                                      'unit': None, 'description': "unexpected", 'range': None,
+                                     'applications': None}),
+                           Variable({'short_name': "indicator_1", 'display_name': "Indicator 1",
+                                     'unit': None, 'description': "expected", 'range': None,
                                      'applications': None})]
 
 
@@ -89,8 +89,10 @@ def test_run_post_processing():
         run_post_processing(['indicator_1'], data_path='./test/test_data/', output_path=output_path, roi=ROI,
                             spatial_resolution=SPATIAL_RESOLUTION, roi_grid=ROI_GRID, destination_grid=DESTINATION_GRID)
         assert os.path.exists(output_path)
-        assert os.path.exists('{}{}'.format(output_path, 'indicator_1_2017-06-05.tif'))
-        assert os.path.exists('{}{}'.format(output_path, 'indicator_1_2017-06-15.tif'))
+        assert os.path.exists('{}{}'.format(output_path, 'indicator_1_20170605.tif'))
+        assert os.path.exists('{}{}'.format(output_path, 'indicator_1_20170615.tif'))
+        assert not os.path.exists('{}{}'.format(output_path, 'indicator_2_20170615.tif'))
+        assert not os.path.exists('{}{}'.format(output_path, 'indicator_2_20170615.tif'))
     finally:
         if os.path.exists(output_path):
             shutil.rmtree(output_path)
@@ -148,5 +150,5 @@ class DummyPostProcessorCreator(PostProcessorCreator):
     def get_indicator_descriptions(cls) -> List[Variable]:
         return _INDICATOR_DESCRIPTIONS
 
-    def create_post_processor(cls, indicators: List[str]) -> DummyPostProcessor:
-        return DummyPostProcessor(indicators)
+    def create_post_processor(cls, indicator_names: List[str]) -> DummyPostProcessor:
+        return DummyPostProcessor(indicator_names)
