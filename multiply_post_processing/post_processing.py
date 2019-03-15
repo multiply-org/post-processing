@@ -31,23 +31,22 @@ def add_post_processor_creator(post_processor_creator: PostProcessorCreator):
 registered_post_processor_creators = pkg_resources.iter_entry_points('post_processor_creators')
 for registered_post_processor_creator in registered_post_processor_creators:
     add_post_processor_creator(registered_post_processor_creator.load())
-    POST_PROCESSOR_CREATOR_REGISTRY.append(registered_post_processor_creator.load())
 
 
-def get_post_processors(indicator_names: List[str]) -> List[PostProcessor]:
+def get_post_processors(requested_indicator_names: List[str]) -> List[PostProcessor]:
     """
-    :param indicator_names: Names of the indicators that shall be derived.
+    :param requested_indicator_names: Names of the indicators that shall be derived.
     :return: The post processors that can be used to derive the designated indicators.
     """
     post_processors = []
     for post_processor_creator in POST_PROCESSOR_CREATOR_REGISTRY:
-        indicators = []
+        indicator_names = []
         indicator_descriptions = post_processor_creator.get_indicator_descriptions()
         for indicator_description in indicator_descriptions:
-            if indicator_description.short_name in indicator_names:
-                indicators.append(indicator_description.short_name)
-        if len(indicators) > 0:
-            post_processors.append(post_processor_creator.create_post_processor(indicators))
+            if indicator_description.short_name in requested_indicator_names:
+                indicator_names.append(indicator_description.short_name)
+        if len(indicator_names) > 0:
+            post_processors.append(post_processor_creator.create_post_processor(indicator_names))
     return post_processors
 
 
@@ -72,14 +71,14 @@ def get_post_processor_description(name: str) -> str:
     raise ValueError('No post processor with name {} found.'.format(name))
 
 
-def get_post_processor(name: str) -> PostProcessor:
+def get_post_processor(name: str, indicator_names: List[str]) -> PostProcessor:
     """
     :param A name of a post-processor
     :return: the post processor of the requested name
     """
     for post_processor_creator in POST_PROCESSOR_CREATOR_REGISTRY:
         if name == post_processor_creator.get_name():
-            return post_processor_creator.create_post_processor()
+            return post_processor_creator.create_post_processor(indicator_names)
     raise ValueError('No post processor with name {} found.'.format(name))
 
 
@@ -182,7 +181,7 @@ def run_post_processing(indicator_names: List[str], data_path: str, output_path:
 def run_post_processor(name: str, data_path: str, output_path: str, roi: Union[str, Polygon],
                        spatial_resolution: int, roi_grid: Optional[str], destination_grid: Optional[str],
                        output_format: Optional[str] = 'GeoTiff'):
-    run_actual_post_processor(get_post_processor(name), data_path, output_path, roi, spatial_resolution, roi_grid,
+    run_actual_post_processor(get_post_processor(name, []), data_path, output_path, roi, spatial_resolution, roi_grid,
                               destination_grid, output_format)
 
 
@@ -203,17 +202,27 @@ def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: 
                                 destination_grid: Optional[str], output_format: Optional[str] = 'GeoTiff'):
     supported_eo_data_types = post_processor.get_names_of_supported_eo_data_types()
     file_refs = _get_valid_files(data_path, supported_eo_data_types)
+    reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
     observations_factory = ObservationsFactory()
     observations_factory.sort_file_ref_list(file_refs)
-    observations = observations_factory.create_observations(file_refs)
+    observations = observations_factory.create_observations(file_refs, reprojection)
     indicator_dict = post_processor.process_observations(observations)
     results = []
     file_names = []
     for indicator_name in indicator_dict:
         results.append(indicator_dict[indicator_name])
-        file_names.append(os.path.join(output_path, DOUBLE_NAME_FORMAT.format(indicator_name, file_refs[1].start_time,
-                                                                              file_refs[1].end_time)))
+        file_names.append(os.path.join(output_path, DOUBLE_NAME_FORMAT.format(indicator_name,
+                                                                              _format(file_refs[1].start_time),
+                                                                              _format(file_refs[1].end_time))))
     _write(results, file_names, roi, spatial_resolution, roi_grid, destination_grid, output_format)
+
+
+def _format(time: str):
+    """
+    Expected input: yyyy-mm-dd
+    Output: yyyymmdd
+    """
+    return time.replace('-', '').split(' ')[0]
 
 
 def _run_variable_post_processor(post_processor: VariablePostProcessor, data_path: str, output_path: str,
@@ -246,7 +255,7 @@ def _run_variable_post_processor(post_processor: VariablePostProcessor, data_pat
         file_names = []
         for indicator_name in indicator_dict:
             results.append(indicator_dict[indicator_name])
-            file_names.append(os.path.join(output_path, SINGLE_NAME_FORMAT.format(indicator_name, date)))
+            file_names.append(os.path.join(output_path, SINGLE_NAME_FORMAT.format(indicator_name, _format(date))))
         _write(results, file_names, roi, spatial_resolution, roi_grid, destination_grid, output_format)
 
 
@@ -297,6 +306,10 @@ if __name__ == '__main__':
                                                           "representation. If not given, the output is given in the "
                                                           "grid defined by the 'state_mask'.")
     args = parser.parse_args()
+    if args.format is None:
+        output_format = 'GeoTiff'
+    else:
+        output_format = args.format
     run_post_processor(name=args.name, data_path=args.input_path, output_path=args.output_path,
-                       output_format=args.format, roi=args.roi, spatial_resolution=int(args.spatial_resolution),
+                       output_format=output_format, roi=args.roi, spatial_resolution=int(args.spatial_resolution),
                        roi_grid=args.roi_grid, destination_grid=args.destination_grid)
