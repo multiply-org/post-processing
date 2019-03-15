@@ -25,15 +25,19 @@ class PostProcessor(metaclass=ABCMeta):
     EODataPostprocessor.
     """
 
-    def __init__(self, indicators: List[str]):
+    def __init__(self, indicator_names: List[str]):
         indicator_descriptions = self.get_indicator_descriptions()
         self.indicators = []
-        for indicator in indicators:
+        if len(indicator_names) > 0:
+            for indicator in indicator_names:
+                for indicator_description in indicator_descriptions:
+                    if indicator == indicator_description.short_name:
+                        self.indicators.append(indicator)
+                        break
+                logging.info('Indicator {} is not provided by post processor {}.'.format(indicator, self.get_name()))
+        else:
             for indicator_description in indicator_descriptions:
-                if indicator_description == indicator_description:
-                    self.indicators.append(indicator)
-                    break
-            logging.info('Indicator {} is not provided by post processor {}.'.format(indicator, self.get_name()))
+                self.indicators.append(indicator_description.short_name)
 
     def get_actual_indicators(self) -> Variable:
         """
@@ -186,8 +190,9 @@ class PostProcessorCreator(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def create_post_processor(cls, indicators: List[str]) -> PostProcessor:
+    def create_post_processor(cls, indicator_names: List[str]) -> PostProcessor:
         """
-        :param indicators: The indicators that shall be derived using this post processor.
+        :param indicator_names: The indicators that shall be derived using this post processor. If the list is empty,
+        all indicators will be derived.
         :return: An instance of the post processor associated with this creator.
         """
