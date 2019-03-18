@@ -1,6 +1,6 @@
 # FuncDivMetrix
 
-Script to calculate Functional Diversity from multiple plant trait raster files (ascii/tiff). Functional Diversity metrics are calculated over plots of adjecent pixels considering the N-dimensional combination of traits found in these pixels. The functional diversity metrics included are: 1) Functional Richnness - Measured through Convex Hull (CVH) Calculation encompassing the volume of trait space observed, 2/3) Funtional divergence - Measured by Mean Nearest Neighbour Distance (MNND) and Villeger's Centroid-based Divergenc (FDiv) and 4) Functional Evenness as formulated by Villeger et al. (2008), (FE). 
+Script to calculate Functional Diversity from multiple plant trait raster files (ascii/tiff). Functional Diversity metrics are calculated over plots of adjecent pixels considering the N-dimensional combination of traits found in these pixels. The Functional Diversity metrics included are: 1) Functional Richnness - Measured through Convex Hull (CVH) Calculation encompassing the volume of trait space observed, 2/3) Funtional divergence - Measured by Mean Nearest Neighbour Distance (MNND) and Villeger et al. (2008)'s Centroid-based Divergence (FDiv) and 4) Functional Evenness as formulated by Villeger et al. (2008), (FE). 
 
 Relevant literature on Functional Diversity metrics: 
 Aiba, Masahiro et al. 2013. “Robustness of Trait Distribution Metrics for Community Assembly Studies under the Uncertainties of Assembly Processes.” Ecology 94(12): 2873–85.
