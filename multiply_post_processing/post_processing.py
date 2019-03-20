@@ -212,7 +212,7 @@ def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: 
     for indicator_name in indicator_dict:
         results.append(indicator_dict[indicator_name])
         file_names.append(os.path.join(output_path, DOUBLE_NAME_FORMAT.format(indicator_name,
-                                                                              _format(file_refs[1].start_time),
+                                                                              _format(file_refs[0].start_time),
                                                                               _format(file_refs[1].end_time))))
     _write(results, file_names, roi, spatial_resolution, roi_grid, destination_grid, output_format)
 
