@@ -214,6 +214,7 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
         geo_cbi = rbr
         geo_cbi[geo_cbi != no_data] *= 2.80278
         geo_cbi[geo_cbi != no_data] += 1.07541
+        geo_cbi[geo_cbi > 3.0] = 3.0
         results = {'geocbi': geo_cbi}
         return results
 
