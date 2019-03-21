@@ -30,7 +30,7 @@ _F_DIV_NAME = 'fdiv'
 _INDICATOR_DESCRIPTIONS = [get_registered_variable(_CVH_NAME), get_registered_variable(_MNND_NAME),
                            get_registered_variable(_FE_NAME), get_registered_variable(_F_DIV_NAME)]
 _NO_DATA_VALUE = np.NaN
-_LAI_THRESHOLD = 95
+_VALID_THRESHOLD = 95
 
 
 def _pre_process(lai: np.array, cab: np.array, cw: np.array) -> Tuple[np.array, np.array, np.array]:
@@ -181,10 +181,10 @@ def _process(a_lai: np.array, a_cab: np.array, a_cw: np.array, indicator_names: 
             # read data in moving window
             r_lai = a_lai[(row - x_offset):(row + x_offset), (column - y_offset):(column + y_offset)]
 
-            r_lai_nan_sum = np.nansum(r_lai)
-            if r_lai_nan_sum < _LAI_THRESHOLD:
-                logging.warning('Total value of {} is below threshold: {} < {}. Will not derive metrics for part of '
-                                'image'.format(_LAI_NAME, r_lai_nan_sum, _LAI_THRESHOLD))
+            num_valid = len(np.where(np.isfinite(r_lai))[0])
+            if num_valid < _VALID_THRESHOLD:
+                logging.warning('Not enough valid pixels found for {}: {} < {}. Will not derive metrics for part of '
+                                'image'.format(_LAI_NAME, num_valid, _VALID_THRESHOLD))
                 continue
             r_cab = a_cab[(row - x_offset):(row + x_offset), (column - y_offset):(column + y_offset)]
             r_cw = a_cw[(row - x_offset):(row + x_offset), (column - y_offset):(column + y_offset)]
@@ -198,9 +198,17 @@ def _process(a_lai: np.array, a_cab: np.array, a_cw: np.array, indicator_names: 
             try:
                 kde = stats.gaussian_kde(est)
                 density = kde(est)
-                lower_quartile = np.percentile(density, 5)
-                noutliers = (density > lower_quartile)
-                estd = est.T[noutliers]
+                if len(np.where(np.isfinite(density))[0]) == 0:
+                    estd = est.T
+                else:
+                    percentile = 5
+                    num_non_outliers = 0
+                    while num_non_outliers < num_valid * _VALID_THRESHOLD and percentile > -1:
+                        noutliers = (density > np.percentile(density, percentile))
+                        num_non_outliers = len(np.where(noutliers)[0])
+                        percentile -= 1
+                    # noinspection PyUnboundLocalVariable
+                    estd = est.T[noutliers]
             except:  # if outlier detection failed
                 estd = est.T
             for func in functions:
