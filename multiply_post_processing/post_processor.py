@@ -129,14 +129,6 @@ class EODataPostProcessor(PostProcessor):
         """
 
     @abstractmethod
-    def process_eo_data(self, eo_data: List[np.array]) -> List[np.array]:
-        """
-        Performs the post processing
-        :param eo_data: The input data required to perform the post processing
-        :return: The result of the post processing
-        """
-
-    @abstractmethod
     def process_observations(self, observations: ObservationsWrapper) -> dict:
         """
         Performs the post processing

@@ -123,9 +123,6 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
         if data_type in _DATA_DICTS:
             return _DATA_DICTS[data_type]
 
-    def process_eo_data(self, eo_data: List[np.array]) -> List[np.array]:
-        pass
-
     def process_observations(self, observations: ObservationsWrapper) -> dict:
         # If we do not have exactly two observations of the same data type wrapped we'll exit.
         if len(observations.dates) != 2:
