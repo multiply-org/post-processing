@@ -181,7 +181,7 @@ def _process(a_lai: np.array, a_cab: np.array, a_cw: np.array, indicator_names: 
             # read data in moving window
             r_lai = a_lai[(row - x_offset):(row + x_offset), (column - y_offset):(column + y_offset)]
 
-            num_valid = len(np.where(np.isfinite(r_lai))[0])
+            num_valid = np.sum(np.isfinite(r_lai))
             if num_valid < _VALID_THRESHOLD:
                 logging.warning('Not enough valid pixels found for {}: {} < {}. Will not derive metrics for part of '
                                 'image'.format(_LAI_NAME, num_valid, _VALID_THRESHOLD))
@@ -198,14 +198,14 @@ def _process(a_lai: np.array, a_cab: np.array, a_cw: np.array, indicator_names: 
             try:
                 kde = stats.gaussian_kde(est)
                 density = kde(est)
-                if len(np.where(np.isfinite(density))[0]) == 0:
+                if np.sum(np.isfinite(density)) == 0:
                     estd = est.T
                 else:
                     percentile = 5
                     num_non_outliers = 0
-                    while num_non_outliers < num_valid * _VALID_THRESHOLD and percentile > -1:
+                    while num_non_outliers < _VALID_THRESHOLD / num_valid and percentile > -1:
                         noutliers = (density > np.percentile(density, percentile))
-                        num_non_outliers = len(np.where(noutliers)[0])
+                        num_non_outliers = np.sum(noutliers)
                         percentile -= 1
                     # noinspection PyUnboundLocalVariable
                     estd = est.T[noutliers]
