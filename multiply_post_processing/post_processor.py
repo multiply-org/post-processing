@@ -97,20 +97,11 @@ class VariablePostProcessor(PostProcessor):
         be passed in the order given by this list.
         """
 
-    @classmethod
     @abstractmethod
-    def get_names_of_required_masks(cls) -> List[str]:
-        """
-        :return: The list of masks required by this post processor to work. Input data is expected to be passed in the
-        order given by this list.
-        """
-
-    @abstractmethod
-    def process_variables(self, variable_data: dict, masks: Optional[np.array] = None) -> dict:
+    def process_variables(self, variable_data: dict) -> dict:
         """
         Performs the post processing
         :param variable_data: The input data required to perform the post processing
-        :param masks: Mask data used to mask out array cells during post-processing.
         :return: The result of the post processing
         """
 
@@ -137,30 +128,19 @@ class EODataPostProcessor(PostProcessor):
         expected to be passed in the order given by this list.+ get_names_
         """
 
-    @classmethod
     @abstractmethod
-    def get_names_of_required_masks(cls) -> List[str]:
-        """
-        :return: The list of masks required by this post processor to work. Input data is expected to be passed in the
-        order given by this list.
-        """
-
-    @abstractmethod
-    def process_eo_data(self, eo_data: List[np.array], masks: List[np.array]) -> List[np.array]:
+    def process_eo_data(self, eo_data: List[np.array]) -> List[np.array]:
         """
         Performs the post processing
         :param eo_data: The input data required to perform the post processing
-        :param masks: Mask data used to mask out array cells during post-processing.
         :return: The result of the post processing
         """
 
     @abstractmethod
-    def process_observations(self, observations: ObservationsWrapper, masks: Optional[List[np.array]] = None) \
-            -> dict:
+    def process_observations(self, observations: ObservationsWrapper) -> dict:
         """
         Performs the post processing
         :param observations: A Wrapper around earth observation data. Provides a convenience method to access EO Data.
-        :param masks: Mask data used to mask out array cells during post-processing.
         :return: The result of the post processing
         """
 

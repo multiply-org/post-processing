@@ -233,11 +233,7 @@ class FunctionalDiversityMetricsPostProcessor(VariablePostProcessor):
     def get_names_of_required_variables(cls) -> List[str]:
         return __NAMES_OF_REQUIRED_VARIABLES__
 
-    @classmethod
-    def get_names_of_required_masks(cls) -> List[str]:
-        return []
-
-    def process_variables(self, variable_data: dict, masks: Optional[np.array] = None) -> dict:
+    def process_variables(self, variable_data: dict) -> dict:
         if len(self.indicators) == 0:
             logging.info('No indicator selected. Will not compute.')
             return {}

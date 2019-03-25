@@ -123,15 +123,10 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
         if data_type in _DATA_DICTS:
             return _DATA_DICTS[data_type]
 
-    @classmethod
-    def get_names_of_required_masks(cls) -> List[str]:
-        return []
-
-    def process_eo_data(self, eo_data: List[np.array], masks: List[np.array]) -> List[np.array]:
+    def process_eo_data(self, eo_data: List[np.array]) -> List[np.array]:
         pass
 
-    def process_observations(self, observations: ObservationsWrapper, masks: Optional[List[np.array]] = None) \
-            -> dict:
+    def process_observations(self, observations: ObservationsWrapper) -> dict:
         # If we do not have exactly two observations of the same data type wrapped we'll exit.
         if len(observations.dates) != 2:
             logging.info("Not exactly two observations provided. Exiting.")
