@@ -19,8 +19,8 @@ _SENTINEL_2_DICT = {'no_data': -9999,'scale_factor': 0.0001, 'version': '_3', 'n
 _LANDSAT_7_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _LANDSAT_8_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _DATA_DICTS = {DataTypeConstants.AWS_S2_L2: _SENTINEL_2_DICT}
-_INDICATOR_NAMES = ['geocbi']
-_INDICATOR_DESCRIPTIONS = [get_registered_variable('geocbi')]
+_INDICATOR_NAMES = ['GeoCBI']
+_INDICATOR_DESCRIPTIONS = [get_registered_variable('GeoCBI')]
 
 logging.getLogger().setLevel(logging.INFO)
 
