@@ -17,8 +17,9 @@ __author__ = "L.T.Hauser (University Leiden, NL), Tonio Fincke (Brockmann Consul
 logging.getLogger().setLevel(logging.INFO)
 
 __NAME__ = 'FunctionalDiversityMetrics'
-__DESCRIPTION__ = ''
-
+__DESCRIPTION__ = 'This post Processor calculates Functional Diversity from multiple plant trait variables. ' \
+                  'Functional Diversity metrics are calculated over plots of adjecent pixels considering the ' \
+                  'N-dimensional combination of traits found in these pixels.'
 _LAI_NAME = 'lai'
 _CW_NAME = 'cw'
 _CAB_NAME = 'cab'
