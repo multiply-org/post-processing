@@ -1,7 +1,7 @@
 - Variable:
     short_name: GeoCBI
     display_name: Geometrically Structured Composite Burned Index
-    unit: -
+    unit:
     description: 'It is a measure of burned severity fire in terms of the level of damage of vegetation and substrate
     after a wildfire is fully extinguished. GeoCBI is a modified version of CBI that takes into account the fraction of
     cover of the different vegetation strata used to compute the CBI.'
@@ -10,21 +10,21 @@
 - Variable:
     short_name: cvh
     display_name: 'Convex Hull Estimation'
-    unit: -
+    unit:
     description: 'Volume of functional Space occupied by the Community'
     range: 'Depends on number of considered traits'
     applications: ['functional diversity']
 - Variable:
     short_name: mnnd
     display_name: 'Mean Nearest Neighbor Distance'
-    unit: -
+    unit:
     description: 'Spread of Trait Distribution, Niche Space Differentiation '
     range: 'Depends on number of considered traits'
     applications: ['functional diversity']
 - Variable:
     short_name: fe
     display_name: 'Functional Evenness'
-    unit: -
+    unit:
     description: 'Branch length variation of Minimum Spanning Tree of Trait Distance Matrix: Regularity of community
     across traits space, Resource space optimization'
     range: 'Depends on number of considered traits'
@@ -32,7 +32,7 @@
 - Variable:
     short_name: fdiv
     display_name: 'Functional Divergence'
-    unit: -
+    unit:
     description: 'Centroid-based Distance Measure: Spread of Trait Distribution, Niche Space Differentiation'
     range: 'Depends on number of considered traits'
     applications: ['functional diversity']
