@@ -1,13 +1,12 @@
 - Variable:
-    short_name: geocbi
-    display_name: Geo CBI
+    short_name: GeoCBI
+    display_name: Geometrically Structured Composite Burned Index
     unit:
-    description: 'Geometrically Structured Composite Burned Index. It is a measure of burned severity fire in terms
-    of the level of damage of vegetation and substrate after a wildfire is fully extinguished. GeoCBI is a modified
-    version of CBI that takes into account the fraction of cover of the different vegetation strata used to compute the
-    CBI. It takes continuous values ranging from 0 (unburned) to 3 (completely burned).'
-    range: '0-3'
-    applications: ['fire severity']
+    description: 'It is a measure of burned severity fire in terms of the level of damage of vegetation and substrate
+    after a wildfire is fully extinguished. GeoCBI is a modified version of CBI that takes into account the fraction of
+    cover of the different vegetation strata used to compute the CBI.'
+    range: '0 (unburned) - 3 (completely burned)'
+    applications: ['Burned area discrimination', 'Fire severity estimation']
 - Variable:
     short_name: cvh
     display_name: CVH
