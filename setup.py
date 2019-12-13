@@ -3,11 +3,11 @@
 from setuptools import setup
 
 requirements = [
-    'numpy',
-    'scipy',
-    'scikit-learn',
-    'shapely',
-    'gdal'
+    # 'numpy',
+    # 'scipy',
+    # 'scikit-learn',
+    # 'shapely',
+    # 'gdal'
 ]
 
 __version__ = None
