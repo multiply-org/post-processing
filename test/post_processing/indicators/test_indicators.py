@@ -13,8 +13,8 @@ def test_get_indicators():
     assert indicators[0]['Variable']['unit'] is None
     assert '0 (unburned) - 3 (completely burned)' == indicators[0]['Variable']['range']
     assert 2 == len(indicators[0]['Variable']['applications'])
-    assert 'Burned area discrimination' in indicators[0]['Variable']['applications']
-    assert 'Fire severity estimation' in indicators[0]['Variable']['applications']
+    assert 'Burned Area Discrimination' in indicators[0]['Variable']['applications']
+    assert 'Fire Severity Estimation' in indicators[0]['Variable']['applications']
 
 
 def test_indicators_are_in_variables():

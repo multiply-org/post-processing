@@ -89,15 +89,6 @@ class VariablePostProcessor(PostProcessor):
     def get_type(cls) -> PostProcessorType:
         return PostProcessorType.VARIABLE_POST_PROCESSOR
 
-    @classmethod
-    @abstractmethod
-    def get_names_of_required_variables(cls) -> List[str]:
-        """
-        :return: The list of biophysical parameters required by this post processor to work. Input data is expected to
-        be passed in the order given by this list.
-        """
-
-    @abstractmethod
     def process_variables(self, variable_data: dict) -> dict:
         """
         Performs the post processing

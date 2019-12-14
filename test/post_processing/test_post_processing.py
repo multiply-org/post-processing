@@ -87,7 +87,8 @@ def test_run_post_processing():
         shutil.rmtree(output_path)
     try:
         run_post_processing(['indicator_1'], data_path='./test/test_data/', output_path=output_path, roi=ROI,
-                            spatial_resolution=SPATIAL_RESOLUTION, roi_grid=ROI_GRID, destination_grid=DESTINATION_GRID)
+                            spatial_resolution=SPATIAL_RESOLUTION, variable_names=['cdm', 'psoil'],
+                            roi_grid=ROI_GRID, destination_grid=DESTINATION_GRID)
         assert os.path.exists(output_path)
         assert os.path.exists('{}{}'.format(output_path, 'indicator_1_20170605.tif'))
         assert os.path.exists('{}{}'.format(output_path, 'indicator_1_20170615.tif'))
@@ -111,15 +112,6 @@ class DummyPostProcessor(VariablePostProcessor):
     @classmethod
     def get_description(cls) -> str:
         return "A post processor for testing"
-
-    def get_names_of_required_variables(self) -> List[str]:
-        required_variables = []
-        if 'indicator_1' in self.indicators:
-            required_variables.append('cdm')
-            required_variables.append('psoil')
-        if 'indicator_2' in self.indicators:
-            required_variables.append('vzghtj')
-        return required_variables
 
     @classmethod
     def get_names_of_required_masks(cls) -> List[str]:

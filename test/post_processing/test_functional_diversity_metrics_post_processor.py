@@ -11,14 +11,6 @@ def test_get_num_time_steps():
     assert 1 == FunctionalDiversityMetricsPostProcessor.get_num_time_steps()
 
 
-def test_get_names_of_required_variables():
-    names_of_required_variables = FunctionalDiversityMetricsPostProcessor.get_names_of_required_variables()
-    assert names_of_required_variables is not None
-    assert 3 == len(names_of_required_variables)
-    assert 'lai' in names_of_required_variables
-    assert 'cab' in names_of_required_variables
-    assert 'cw' in names_of_required_variables
-
 
 def test_get_name():
     assert 'FunctionalDiversityMetrics' == FunctionalDiversityMetricsPostProcessor.get_name()
@@ -32,9 +24,16 @@ def test_pre_process():
     lai = np.array([0.0, 1.0, 2.0, 3.0])
     cab = np.array([1.0, 0.0, 2.0, 3.0])
     cw = np.array([2.0, 1.0, 0.0, 3.0])
-    (a_lai, a_cab, a_cw) = _pre_process(lai, cab, cw)
+    var_dict = {
+        'lai':lai, 'cab': cab, 'cw': cw
+    }
+    preprocessed_var_dict = _pre_process(var_dict)
 
     sqrt_1_5 = np.sqrt(1.5)
+
+    a_lai = preprocessed_var_dict['lai']
+    a_cab = preprocessed_var_dict['cab']
+    a_cw = preprocessed_var_dict['cw']
 
     assert np.isnan(a_lai[0])
     assert approx(-sqrt_1_5) == a_lai[1]
@@ -137,8 +136,10 @@ def test_process():
                        0.24473101, 0.72317209, 0.45049538, 0.79147526, 0.17959897],
                       [0.08305292, 0.10973638, 0.88852854, 0.42643293, 0.09990597,
                        0.15200276, 0.5775525, 0.73609367, 0.82047272, 0.57943779]])
-
-    results_dict = _process(a_lai, a_cw, a_cab, ['cvh', 'mnnd', 'fe', 'fdiv'])
+    var_dict = {
+        'lai':a_lai, 'cw': a_cw, 'cab': a_cab
+    }
+    results_dict = _process(var_dict, ['cvh', 'mnnd', 'fe', 'fdiv'])
 
     assert 4 == len(results_dict)
     assert 'cvh' in results_dict

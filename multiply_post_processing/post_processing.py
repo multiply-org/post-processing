@@ -170,31 +170,36 @@ def _get_dummy_data_set():
 
 
 def run_post_processing(indicator_names: List[str], data_path: str, output_path: str, roi: Union[str, Polygon],
-                        spatial_resolution: int, roi_grid: Optional[str], destination_grid: Optional[str],
+                        spatial_resolution: int, variable_names: Optional[List[str]] = None,
+                        roi_grid: Optional[str] = 'EPSG:4326', destination_grid: Optional[str] = None,
                         output_format: Optional[str] = 'GeoTiff'):
     post_processors = get_post_processors(indicator_names)
     for post_processor in post_processors:
-        run_actual_post_processor(post_processor, data_path, output_path, roi, spatial_resolution, roi_grid,
-                                  destination_grid, output_format)
+        run_actual_post_processor(post_processor, data_path, output_path, roi, spatial_resolution, variable_names,
+                                  roi_grid, destination_grid, output_format)
 
 
 def run_post_processor(name: str, data_path: str, output_path: str, roi: Union[str, Polygon],
-                       spatial_resolution: int, roi_grid: Optional[str], destination_grid: Optional[str],
+                       spatial_resolution: int, variable_names: Optional[List[str]] = None,
+                       roi_grid: Optional[str] = 'EPSG:4326', destination_grid: Optional[str] = None,
                        output_format: Optional[str] = 'GeoTiff'):
-    run_actual_post_processor(get_post_processor(name, []), data_path, output_path, roi, spatial_resolution, roi_grid,
-                              destination_grid, output_format)
+    run_actual_post_processor(get_post_processor(name, []), data_path, output_path, roi, spatial_resolution,
+                              variable_names, roi_grid, destination_grid, output_format)
 
 
 # noinspection PyTypeChecker
 def run_actual_post_processor(post_processor: PostProcessor, data_path: str, output_path: str,
-                              roi: Union[str, Polygon], spatial_resolution: int, roi_grid: Optional[str],
-                              destination_grid: Optional[str], output_format: Optional[str] = 'GeoTiff'):
+                              roi: Union[str, Polygon], spatial_resolution: int,
+                              variable_names: Optional[List[str]] = None, roi_grid: Optional[str] = 'EPSG:4326',
+                              destination_grid: Optional[str] = None, output_format: Optional[str] = 'GeoTiff'):
     if post_processor.get_type() == PostProcessorType.EO_DATA_POST_PROCESSOR:
         _run_eo_data_post_processor(post_processor, data_path, output_path, roi, spatial_resolution, roi_grid,
                                     destination_grid, output_format)
     elif post_processor.get_type() == PostProcessorType.VARIABLE_POST_PROCESSOR:
-        _run_variable_post_processor(post_processor, data_path, output_path, roi, spatial_resolution, roi_grid,
-                                    destination_grid, output_format)
+        if variable_names is None:
+            raise ValueError('No list with variable names be provided.')
+        _run_variable_post_processor(post_processor, data_path, output_path, variable_names, roi, spatial_resolution,
+                                     roi_grid, destination_grid, output_format)
 
 
 def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: str, output_path: str,
@@ -226,30 +231,25 @@ def _format(time: str):
 
 
 def _run_variable_post_processor(post_processor: VariablePostProcessor, data_path: str, output_path: str,
-                                roi: Union[str, Polygon], spatial_resolution: int, roi_grid: Optional[str],
-                                 destination_grid: Optional[str], output_format: Optional[str] = 'GeoTiff'):
-    names_of_required_variables = post_processor.get_names_of_required_variables()
-    file_refs = _get_valid_files(data_path, names_of_required_variables)
+                                 variable_names: List[str], roi: Union[str, Polygon], spatial_resolution: int,
+                                 roi_grid: Optional[str], destination_grid: Optional[str],
+                                 output_format: Optional[str] = 'GeoTiff'):
+    file_refs = _get_valid_files(data_path, variable_names)
     file_ref_groups = _group_file_refs_by_date(file_refs)
     reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
     for date in file_ref_groups:
         data_files = {}
         file_refs_for_date = file_ref_groups[date]
-        for name_of_required_variable in names_of_required_variables:
-            variable_available = False
+        for variable_name in variable_names:
             for file_ref in file_refs_for_date:
-                if is_valid(file_ref.url, name_of_required_variable):
-                    data_files[name_of_required_variable] = file_ref.url
-                    variable_available = True
+                if is_valid(file_ref.url, variable_name):
+                    data_files[variable_name] = file_ref.url
                     break
-            if not variable_available:
-                logging.warning('Required variable {} not provided for {}. Skip.'.format(name_of_required_variable, date))
-                break
         variable_data = {}
-        for name_of_required_variable in data_files:
-            dataset = gdal.Open(data_files[name_of_required_variable])
+        for variable_name in data_files:
+            dataset = gdal.Open(data_files[variable_name])
             reprojected_data_set = reprojection.reproject(dataset)
-            variable_data[name_of_required_variable] = reprojected_data_set.GetRasterBand(1).ReadAsArray()
+            variable_data[variable_name] = reprojected_data_set.GetRasterBand(1).ReadAsArray()
         indicator_dict = post_processor.process_variables(variable_data)
         results = []
         file_names = []

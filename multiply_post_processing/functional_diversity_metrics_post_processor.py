@@ -10,7 +10,7 @@ from scipy import spatial
 from scipy.spatial.distance import squareform, pdist
 from sklearn.neighbors import NearestNeighbors
 import sklearn.preprocessing as sk
-from typing import List, Optional, Tuple
+from typing import List
 
 __author__ = "L.T.Hauser (University Leiden, NL), Tonio Fincke (Brockmann Consult GmbH)"
 
@@ -20,10 +20,6 @@ __NAME__ = 'FunctionalDiversityMetrics'
 __DESCRIPTION__ = 'This post Processor calculates Functional Diversity from multiple plant trait variables. ' \
                   'Functional Diversity metrics are calculated over plots of adjecent pixels considering the ' \
                   'N-dimensional combination of traits found in these pixels.'
-_LAI_NAME = 'lai'
-_CW_NAME = 'cw'
-_CAB_NAME = 'cab'
-__NAMES_OF_REQUIRED_VARIABLES__ = [_LAI_NAME, _CW_NAME, _CAB_NAME]
 _CVH_NAME = 'cvh'
 _MNND_NAME = 'mnnd'
 _FE_NAME = 'fe'
@@ -34,11 +30,11 @@ _NO_DATA_VALUE = np.NaN
 _VALID_THRESHOLD = 95
 
 
-def _pre_process(lai: np.array, cab: np.array, cw: np.array) -> Tuple[np.array, np.array, np.array]:
-    a_lai = _pre_process_trait(lai)
-    a_cab = _pre_process_trait(cab)
-    a_cw = _pre_process_trait(cw)
-    return a_lai, a_cab, a_cw
+def _pre_process(variables:  dict) -> dict:
+    preprocessed = {}
+    for variable in variables:
+        preprocessed[variable] = _pre_process_trait(variables[variable])
+    return preprocessed
 
 
 def _pre_process_trait(trait: np.array) -> np.array:
@@ -166,13 +162,16 @@ def _get_functions(indicator_names: List[str], rows: int, columns: int, x_offset
     return functions
 
 
-def _process(a_lai: np.array, a_cab: np.array, a_cw: np.array, indicator_names: List[str]) -> dict:
+def _process(variable_data: dict, indicator_names: List[str]) -> dict:
     x_size = 10
     y_size = 10
     x_offset = 5
     y_offset = 5
-    rows = a_lai.shape[0]
-    columns = a_lai.shape[1]
+    first_var_name = list(variable_data.keys())[0]
+    first_var = variable_data[first_var_name]
+    num_vars = 3
+    rows = first_var.shape[0]
+    columns = first_var.shape[1]
 
     functions = _get_functions(indicator_names, rows, columns, x_offset, y_offset)
 
@@ -180,21 +179,23 @@ def _process(a_lai: np.array, a_cab: np.array, a_cw: np.array, indicator_names: 
         for column in np.arange(y_offset, columns, y_size):
 
             # read data in moving window
-            r_lai = a_lai[(row - x_offset):(row + x_offset), (column - y_offset):(column + y_offset)]
+            r_first_var = first_var[(row - x_offset):(row + x_offset), (column - y_offset):(column + y_offset)]
 
-            num_valid = np.sum(np.isfinite(r_lai))
+            num_valid = np.sum(np.isfinite(r_first_var))
             if num_valid < _VALID_THRESHOLD:
                 logging.warning('Not enough valid pixels found for {}: {} < {}. Will not derive metrics for part of '
-                                'image'.format(_LAI_NAME, num_valid, _VALID_THRESHOLD))
+                                'image'.format(first_var_name, num_valid, _VALID_THRESHOLD))
                 continue
-            r_cab = a_cab[(row - x_offset):(row + x_offset), (column - y_offset):(column + y_offset)]
-            r_cw = a_cw[(row - x_offset):(row + x_offset), (column - y_offset):(column + y_offset)]
+            concatenate_list = []
+            for variable in variable_data:
+                r_var = variable_data[variable][(row - x_offset):(row + x_offset), (column - y_offset):(column + y_offset)]
+                concatenate_list.append(np.concatenate(r_var))
             # arrange data#
-            traitslist = np.array([np.concatenate(r_cab), np.concatenate(r_cw), np.concatenate(r_lai)])
+            traitslist = np.array(concatenate_list)
             # EXCLUDE MISSING VALUES / NaN FROM ANALYSIS ##
             est = traitslist[~np.isnan(traitslist)]
-            lengthr = int(len(est) / 3)
-            est = np.reshape(est, (3, lengthr))
+            lengthr = int(len(est) / num_vars)
+            est = np.reshape(est, (num_vars, lengthr))
             # kernel density estimates to define outliers
             try:
                 kde = stats.gaussian_kde(est)
@@ -230,16 +231,12 @@ class FunctionalDiversityMetricsPostProcessor(VariablePostProcessor):
     def get_num_time_steps(cls) -> int:
         return 1
 
-    @classmethod
-    def get_names_of_required_variables(cls) -> List[str]:
-        return __NAMES_OF_REQUIRED_VARIABLES__
-
     def process_variables(self, variable_data: dict) -> dict:
         if len(self.indicators) == 0:
             logging.info('No indicator selected. Will not compute.')
             return {}
-        a_lai, a_cab, a_cw = _pre_process(variable_data[_LAI_NAME], variable_data[_CAB_NAME], variable_data[_CW_NAME])
-        return _process(a_lai, a_cab, a_cw, self.indicators)
+        pre_processed_variable_data = _pre_process(variable_data)
+        return _process(pre_processed_variable_data, self.indicators)
 
     @classmethod
     def get_name(cls) -> str:
