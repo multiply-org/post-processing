@@ -184,11 +184,11 @@ def run_post_processing(indicator_names: List[str], data_path: str, output_path:
 
 
 def run_post_processor(name: str, data_path: str, output_path: str, roi: Union[str, Polygon],
-                       spatial_resolution: int, variable_names: Optional[List[str]] = None,
-                       roi_grid: Optional[str] = 'EPSG:4326', destination_grid: Optional[str] = None,
-                       output_format: Optional[str] = 'GeoTiff'):
-    run_actual_post_processor(get_post_processor(name, []), data_path, output_path, roi, spatial_resolution,
-                              variable_names, roi_grid, destination_grid, output_format)
+                       spatial_resolution: int, indicator_names: Optional[List[str]] = [],
+                       variable_names: Optional[List[str]] = None, roi_grid: Optional[str] = 'EPSG:4326',
+                       destination_grid: Optional[str] = None, output_format: Optional[str] = 'GeoTiff'):
+    run_actual_post_processor(get_post_processor(name, indicator_names), data_path, output_path, roi,
+                              spatial_resolution, variable_names, roi_grid, destination_grid, output_format)
 
 
 # noinspection PyTypeChecker
