@@ -7,7 +7,7 @@ import shutil
 from multiply_core.util import FileRef
 from multiply_core.variables import Variable
 import multiply_post_processing
-from multiply_post_processing import PostProcessorCreator, VariablePostProcessor
+from multiply_post_processing import PostProcessorCreator, VariablePostProcessor, PostProcessorType
 from multiply_post_processing.post_processing import _group_file_refs_by_date, _get_valid_files, run_post_processing
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
@@ -131,6 +131,14 @@ class DummyPostProcessor(VariablePostProcessor):
 
 
 class DummyPostProcessorCreator(PostProcessorCreator):
+
+    @classmethod
+    def get_type(cls) -> PostProcessorType:
+        return PostProcessorType.VARIABLE_POST_PROCESSOR
+
+    @classmethod
+    def get_required_input_data_types(cls) -> List[str]:
+        return []
 
     def get_name(cls) -> str:
         return DummyPostProcessor.get_name()

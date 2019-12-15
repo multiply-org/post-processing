@@ -1,7 +1,7 @@
 import logging
 from abc import ABCMeta, abstractmethod
 
-from multiply_post_processing import PostProcessorCreator, PostProcessor, VariablePostProcessor
+from multiply_post_processing import PostProcessorCreator, PostProcessor, VariablePostProcessor, PostProcessorType
 from multiply_core.variables import get_registered_variable, Variable
 import numpy as np
 from scipy.sparse.csgraph import minimum_spanning_tree
@@ -252,6 +252,14 @@ class FunctionalDiversityMetricsPostProcessor(VariablePostProcessor):
 
 
 class FunctionalDiversityMetricsPostProcessorCreator(PostProcessorCreator):
+
+    @classmethod
+    def get_type(cls) -> PostProcessorType:
+        return PostProcessorType.VARIABLE_POST_PROCESSOR
+
+    @classmethod
+    def get_required_input_data_types(cls) -> List[str]:
+        return []
 
     @classmethod
     def get_name(cls) -> str:

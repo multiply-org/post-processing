@@ -4,9 +4,9 @@ from typing import List, Optional
 
 import numpy as np
 
-from multiply_core.observations import ObservationsWrapper, DataTypeConstants
+from multiply_core.observations import ObservationsWrapper, DataTypeConstants, SENTINEL_2_MODEL_DATA_TYPE
 from multiply_core.variables import get_registered_variable, Variable
-from multiply_post_processing import EODataPostProcessor, PostProcessorCreator, PostProcessor
+from multiply_post_processing import EODataPostProcessor, PostProcessorCreator, PostProcessor, PostProcessorType
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH), Gonzalo Otón & Magí Franquesa (Universidad de Alcalá)'
 
@@ -18,6 +18,7 @@ _SENTINEL_2_DICT = {'no_data': -9999,'scale_factor': 0.0001, 'version': '_3', 'n
                     'smir': 'B11_sur.tif', 'swir': 'B12_sur.tif'}
 _LANDSAT_7_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _LANDSAT_8_DICT = {'scale_factor': 0.0001, 'version': '_1'}
+#todo add support for S2_L2
 _DATA_DICTS = {DataTypeConstants.AWS_S2_L2: _SENTINEL_2_DICT}
 _INDICATOR_NAMES = ['GeoCBI']
 _INDICATOR_DESCRIPTIONS = [get_registered_variable('GeoCBI')]
@@ -109,7 +110,7 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
 
     @classmethod
     def get_names_of_supported_eo_data_types(cls) -> List[str]:
-        return [DataTypeConstants.AWS_S2_L2]
+        return [SENTINEL_2_MODEL_DATA_TYPE, DataTypeConstants.AWS_S2_L2, DataTypeConstants.S2_L2]
 
     @classmethod
     def get_names_of_required_bands(cls, data_type: str) -> List[str]:
@@ -224,6 +225,14 @@ class BurnedSeverityPostProcessor(EODataPostProcessor):
 
 
 class BurnedSeverityPostProcessorCreator(PostProcessorCreator):
+
+    @classmethod
+    def get_type(cls) -> PostProcessorType:
+        return PostProcessorType.EO_DATA_POST_PROCESSOR
+
+    @classmethod
+    def get_required_input_data_types(cls) -> List[str]:
+        return [SENTINEL_2_MODEL_DATA_TYPE]
 
     @classmethod
     def get_name(cls) -> str:

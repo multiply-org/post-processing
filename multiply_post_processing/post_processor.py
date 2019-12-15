@@ -153,6 +153,21 @@ class PostProcessorCreator(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
+    def get_type(cls) -> PostProcessorType:
+        """
+        :return: The Type of PostProcessor.
+        """
+
+    @classmethod
+    @abstractmethod
+    def get_required_input_data_types(cls) -> List[str]:
+        """
+        :return: The Input Data Types required by this post processor.
+        """
+
+
+    @classmethod
+    @abstractmethod
     def create_post_processor(cls, indicator_names: List[str]) -> PostProcessor:
         """
         :param indicator_names: The indicators that shall be derived using this post processor. If the list is empty,
