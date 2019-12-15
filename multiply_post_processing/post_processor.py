@@ -39,7 +39,7 @@ class PostProcessor(metaclass=ABCMeta):
             for indicator_description in indicator_descriptions:
                 self.indicators.append(indicator_description.short_name)
 
-    def get_actual_indicators(self) -> Variable:
+    def get_actual_indicators(self) -> List[Variable]:
         """
         :return: The descriptions of the indicators that are actually computed by this post processor.
         """
