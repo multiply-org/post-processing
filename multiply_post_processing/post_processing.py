@@ -23,6 +23,13 @@ POST_PROCESSOR_CREATOR_REGISTRY = []
 SINGLE_NAME_FORMAT = '{}_{}.tif'
 DOUBLE_NAME_FORMAT = '{}_{}_{}.tif'
 
+component_progress_logger = logging.getLogger('ComponentProgress')
+component_progress_logger.setLevel(logging.INFO)
+component_progress_formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
+component_progress_logging_handler = logging.StreamHandler()
+component_progress_logging_handler.setLevel(logging.INFO)
+component_progress_logging_handler.setFormatter(component_progress_formatter)
+component_progress_logger.addHandler(component_progress_logging_handler)
 
 def add_post_processor_creator(post_processor_creator: PostProcessorCreator):
     POST_PROCESSOR_CREATOR_REGISTRY.append(post_processor_creator)
@@ -214,16 +221,20 @@ def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: 
     reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
     observations_factory = ObservationsFactory()
     observations_factory.sort_file_ref_list(file_refs)
-    observations = observations_factory.create_observations(file_refs, reprojection)
-    indicator_dict = post_processor.process_observations(observations)
-    results = []
-    file_names = []
-    for indicator_name in indicator_dict:
-        results.append(indicator_dict[indicator_name])
-        file_names.append(os.path.join(output_path, DOUBLE_NAME_FORMAT.format(indicator_name,
-                                                                              _format(file_refs[0].start_time),
-                                                                              _format(file_refs[1].end_time))))
-    _write(results, file_names, roi, spatial_resolution, roi_grid, destination_grid, output_format)
+    for i in range(len(file_refs) - 1):
+        component_progress_logger.info(f'{int((i / (len(file_refs) - 1)) * 100)}-'
+                                       f'{int(((i + 1) / (len(file_refs) - 1)) * 100)}')
+        used_file_refs = [file_refs[i], file_refs[i + 1]]
+        observations = observations_factory.create_observations(used_file_refs, reprojection)
+        indicator_dict = post_processor.process_observations(observations)
+        results = []
+        file_names = []
+        for indicator_name in indicator_dict:
+            results.append(indicator_dict[indicator_name])
+            file_names.append(os.path.join(output_path, DOUBLE_NAME_FORMAT.format(indicator_name,
+                                                                              _format(used_file_refs[0].start_time),
+                                                                              _format(used_file_refs[1].end_time))))
+        _write(results, file_names, roi, spatial_resolution, roi_grid, destination_grid, output_format)
 
 
 def _format(time: str):
@@ -241,7 +252,9 @@ def _run_variable_post_processor(post_processor: VariablePostProcessor, data_pat
     file_refs = _get_valid_files(data_path, variable_names)
     file_ref_groups = _group_file_refs_by_date(file_refs)
     reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
-    for date in file_ref_groups:
+    for i, date in enumerate(file_ref_groups):
+        component_progress_logger.info(f'{int((i / (len(file_ref_groups.keys()))) * 100)}-'
+                                       f'{int(((i + 1) / (len(file_ref_groups.keys()))) * 100)}')
         data_files = {}
         file_refs_for_date = file_ref_groups[date]
         for variable_name in variable_names:
