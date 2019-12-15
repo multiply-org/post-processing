@@ -33,6 +33,10 @@ for registered_post_processor_creator in registered_post_processor_creators:
     add_post_processor_creator(registered_post_processor_creator.load())
 
 
+def get_post_processor_creators() -> List[PostProcessorCreator]:
+    return POST_PROCESSOR_CREATOR_REGISTRY
+
+
 def get_post_processors(requested_indicator_names: List[str]) -> List[PostProcessor]:
     """
     :param requested_indicator_names: Names of the indicators that shall be derived.
