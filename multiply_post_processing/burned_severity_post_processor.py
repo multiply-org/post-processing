@@ -18,8 +18,7 @@ _SENTINEL_2_DICT = {'no_data': -9999,'scale_factor': 0.0001, 'version': '_3', 'n
                     'smir': 'B11_sur.tif', 'swir': 'B12_sur.tif'}
 _LANDSAT_7_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _LANDSAT_8_DICT = {'scale_factor': 0.0001, 'version': '_1'}
-#todo add support for S2_L2
-_DATA_DICTS = {DataTypeConstants.AWS_S2_L2: _SENTINEL_2_DICT}
+_DATA_DICTS = {DataTypeConstants.AWS_S2_L2: _SENTINEL_2_DICT, DataTypeConstants.S2_L2: _SENTINEL_2_DICT}
 _INDICATOR_NAMES = ['GeoCBI']
 _INDICATOR_DESCRIPTIONS = [get_registered_variable('GeoCBI')]
 
