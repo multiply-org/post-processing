@@ -221,6 +221,10 @@ def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: 
     reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
     observations_factory = ObservationsFactory()
     observations_factory.sort_file_ref_list(file_refs)
+    if len(file_refs) < 2:
+        logging.getLogger().info(f'Not enough observations found. '
+                                 f'Can not conduct post processing for {post_processor.get_name()}')
+        return
     for i in range(len(file_refs) - 1):
         component_progress_logger.info(f'{int((i / (len(file_refs) - 1)) * 100)}-'
                                        f'{int(((i + 1) / (len(file_refs) - 1)) * 100)}')
