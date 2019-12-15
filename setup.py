@@ -29,7 +29,7 @@ setup(name='multiply-post-processing',
               'functional_diversity_metrics_post_processor_creator = multiply_post_processing:'
               'functional_diversity_metrics_post_processor.FunctionalDiversityMetricsPostProcessorCreator'
           ],
-          'variables': ['indicators = multiply_post_processing.indicators:indicators.get_indicators']
+          # 'variables': ['indicators = multiply_post_processing.indicators:indicators.get_indicators']
       },
       install_requires=requirements
 )
