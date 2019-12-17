@@ -2,7 +2,8 @@ import logging
 from abc import ABCMeta, abstractmethod
 
 from multiply_post_processing import PostProcessorCreator, PostProcessor, VariablePostProcessor, PostProcessorType
-from multiply_core.variables import get_registered_variable, Variable
+from multiply_post_processing.indicators import get_indicator
+from multiply_core.variables import Variable
 import numpy as np
 from scipy.sparse.csgraph import minimum_spanning_tree
 from scipy import stats
@@ -24,8 +25,8 @@ _CVH_NAME = 'cvh'
 _MNND_NAME = 'mnnd'
 _FE_NAME = 'fe'
 _F_DIV_NAME = 'fdiv'
-_INDICATOR_DESCRIPTIONS = [get_registered_variable(_CVH_NAME), get_registered_variable(_MNND_NAME),
-                           get_registered_variable(_FE_NAME), get_registered_variable(_F_DIV_NAME)]
+_INDICATOR_DESCRIPTIONS = [get_indicator(_CVH_NAME), get_indicator(_MNND_NAME),
+                           get_indicator(_FE_NAME), get_indicator(_F_DIV_NAME)]
 _NO_DATA_VALUE = np.NaN
 _VALID_THRESHOLD = 95
 

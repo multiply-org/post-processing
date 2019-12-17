@@ -5,8 +5,9 @@ from typing import List, Optional
 import numpy as np
 
 from multiply_core.observations import ObservationsWrapper, DataTypeConstants, SENTINEL_2_MODEL_DATA_TYPE
-from multiply_core.variables import get_registered_variable, Variable
+from multiply_core.variables import Variable
 from multiply_post_processing import EODataPostProcessor, PostProcessorCreator, PostProcessor, PostProcessorType
+from multiply_post_processing.indicators import get_indicator
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH), Gonzalo Otón & Magí Franquesa (Universidad de Alcalá)'
 
@@ -20,7 +21,7 @@ _LANDSAT_7_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _LANDSAT_8_DICT = {'scale_factor': 0.0001, 'version': '_1'}
 _DATA_DICTS = {DataTypeConstants.AWS_S2_L2: _SENTINEL_2_DICT, DataTypeConstants.S2_L2: _SENTINEL_2_DICT}
 _INDICATOR_NAMES = ['GeoCBI']
-_INDICATOR_DESCRIPTIONS = [get_registered_variable('GeoCBI')]
+_INDICATOR_DESCRIPTIONS = [get_indicator('GeoCBI')]
 
 logging.getLogger().setLevel(logging.INFO)
 
