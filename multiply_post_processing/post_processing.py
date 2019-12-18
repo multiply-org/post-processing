@@ -226,8 +226,7 @@ def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: 
                                  f'Can not conduct post processing for {post_processor.get_name()}')
         return
     for i in range(len(file_refs) - 1):
-        component_progress_logger.info(f'{int((i / (len(file_refs) - 1)) * 100)}-'
-                                       f'{int(((i + 1) / (len(file_refs) - 1)) * 100)}')
+        component_progress_logger.info(f'{int((i / (len(file_refs) - 1)) * 100)}')
         used_file_refs = [file_refs[i], file_refs[i + 1]]
         observations = observations_factory.create_observations(used_file_refs, reprojection)
         indicator_dict = post_processor.process_observations(observations)
@@ -257,8 +256,7 @@ def _run_variable_post_processor(post_processor: VariablePostProcessor, data_pat
     file_ref_groups = _group_file_refs_by_date(file_refs)
     reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
     for i, date in enumerate(file_ref_groups):
-        component_progress_logger.info(f'{int((i / (len(file_ref_groups.keys()))) * 100)}-'
-                                       f'{int(((i + 1) / (len(file_ref_groups.keys()))) * 100)}')
+        component_progress_logger.info(f'{int((i / (len(file_ref_groups.keys()))) * 100)}')
         data_files = {}
         file_refs_for_date = file_ref_groups[date]
         for variable_name in variable_names:
