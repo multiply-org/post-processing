@@ -34,7 +34,8 @@ class PostProcessor(metaclass=ABCMeta):
                     if indicator == indicator_description.short_name:
                         self.indicators.append(indicator)
                         break
-                logging.info('Indicator {} is not provided by post processor {}.'.format(indicator, self.get_name()))
+                if indicator not in self.indicators:
+                    logging.info(f'Indicator {indicator} is not provided by post processor {self.get_name()}.')
         else:
             for indicator_description in indicator_descriptions:
                 self.indicators.append(indicator_description.short_name)
