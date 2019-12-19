@@ -242,10 +242,10 @@ def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: 
 
 def _format(time: str):
     """
-    Expected input: yyyy-mm-dd
     Output: yyyymmdd
     """
-    return time.replace('-', '').split(' ')[0]
+    time = get_time_from_string(time)
+    return time.strftime('%Y%m%d-%H%M')
 
 
 def _run_variable_post_processor(post_processor: VariablePostProcessor, data_path: str, output_path: str,
