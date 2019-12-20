@@ -7,7 +7,7 @@ import os
 import osr
 import pkg_resources
 
-from multiply_core.observations import GeoTiffWriter, ObservationsFactory, data_validation, is_valid
+from multiply_core.observations import GeoTiffWriter, ObservationsFactory, data_validation, is_valid, get_valid_files
 from multiply_core.util import FileRef, FileRefCreation, Reprojection, get_time_from_string
 from multiply_core.variables import Variable
 from shapely.geometry import Polygon
@@ -104,21 +104,6 @@ def get_available_indicators() -> List[Variable]:
             if indicator_description not in indicator_descriptions:
                 indicator_descriptions.append(indicator_description)
     return indicator_descriptions
-
-
-# todo almost the same method is included in inference engine. Move it to core as part of the observations factory.
-def _get_valid_files(datasets_dir: str, data_types: Optional[List[str]] = []) -> List[FileRef]:
-    file_refs = []
-    file_ref_creation = FileRefCreation()
-    found_files = glob.glob(datasets_dir + '/**', recursive=True)
-    for found_file in found_files:
-        found_file = found_file.replace('\\', '/')
-        type = data_validation.get_valid_type(found_file)
-        if len(data_types) > 0 and type in data_types:
-            file_ref = file_ref_creation.get_file_ref(type, found_file)
-            if file_ref is not None:
-                file_refs.append(file_ref)
-    return file_refs
 
 
 # todo almost the same method is included in inference engine. Find way to harmonize
