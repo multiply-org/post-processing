@@ -1,9 +1,8 @@
 import logging
-import numpy as np
 
 from abc import abstractmethod, ABCMeta
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 from multiply_core.observations import ObservationsWrapper
 from multiply_core.variables import Variable
