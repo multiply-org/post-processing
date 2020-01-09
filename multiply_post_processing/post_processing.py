@@ -1,14 +1,14 @@
 import argparse
 import gdal
-import glob
 import logging
 import numpy as np
 import os
 import osr
 import pkg_resources
 
-from multiply_core.observations import GeoTiffWriter, ObservationsFactory, data_validation, is_valid, get_valid_files
-from multiply_core.util import FileRef, FileRefCreation, Reprojection, get_time_from_string
+from datetime import datetime
+from multiply_core.observations import GeoTiffWriter, ObservationsFactory, is_valid, get_valid_files
+from multiply_core.util import FileRef, Reprojection, get_time_from_string
 from multiply_core.variables import Variable
 from shapely.geometry import Polygon
 from shapely.wkt import loads
@@ -202,42 +202,43 @@ def _run_eo_data_post_processor(post_processor: EODataPostProcessor, data_path: 
                                 roi: Union[str, Polygon], spatial_resolution: int, roi_grid: Optional[str],
                                 destination_grid: Optional[str], output_format: Optional[str] = 'GeoTiff'):
     supported_eo_data_types = post_processor.get_names_of_supported_eo_data_types()
-    file_refs = _get_valid_files(data_path, supported_eo_data_types)
+    file_refs = get_valid_files(data_path, supported_eo_data_types)
     reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
     observations_factory = ObservationsFactory()
-    observations_factory.sort_file_ref_list(file_refs)
-    if len(file_refs) < 2:
+    observations = observations_factory.create_observations(file_refs, reprojection)
+    if observations.get_num_observations() < 2:
         logging.getLogger().info(f'Not enough observations found. '
                                  f'Can not conduct post processing for {post_processor.get_name()}')
         return
-    for i in range(len(file_refs) - 1):
-        component_progress_logger.info(f'{int((i / (len(file_refs) - 1)) * 100)}')
-        used_file_refs = [file_refs[i], file_refs[i + 1]]
-        observations = observations_factory.create_observations(used_file_refs, reprojection)
-        indicator_dict = post_processor.process_observations(observations)
+    for i in range(observations.get_num_observations() - 1):
+        component_progress_logger.info(f'{int((i / (observations.get_num_observations() - 1)) * 100)}')
+        start = observations.dates[i]
+        end = observations.dates[i + 1]
+        observations_subset = observations.get_observations_subset(start, end)
+        indicator_dict = post_processor.process_observations(observations_subset)
         results = []
         file_names = []
         for indicator_name in indicator_dict:
             results.append(indicator_dict[indicator_name])
             file_names.append(os.path.join(output_path, DOUBLE_NAME_FORMAT.format(indicator_name,
-                                                                              _format(used_file_refs[0].start_time),
-                                                                              _format(used_file_refs[1].end_time))))
+                                                                              _format(start), _format(end))))
         _write(results, file_names, roi, spatial_resolution, roi_grid, destination_grid, output_format)
 
 
-def _format(time: str):
+def _format(time: Union[datetime, str]):
     """
     Output: yyyymmdd
     """
-    time = get_time_from_string(time)
-    return time.strftime('%Y%m%d-%H%M')
+    if type(time) == str:
+        time = get_time_from_string(time)
+    return time.strftime('%Y%m%d')
 
 
 def _run_variable_post_processor(post_processor: VariablePostProcessor, data_path: str, output_path: str,
                                  variable_names: List[str], roi: Union[str, Polygon], spatial_resolution: int,
                                  roi_grid: Optional[str], destination_grid: Optional[str],
                                  output_format: Optional[str] = 'GeoTiff'):
-    file_refs = _get_valid_files(data_path, variable_names)
+    file_refs = get_valid_files(data_path, variable_names)
     file_ref_groups = _group_file_refs_by_date(file_refs)
     reprojection = _get_reprojection(spatial_resolution, roi, roi_grid, destination_grid)
     for i, date in enumerate(file_ref_groups):

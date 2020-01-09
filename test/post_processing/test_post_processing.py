@@ -4,11 +4,12 @@ import numpy as np
 import os
 import shutil
 
+from multiply_core.observations import get_valid_files
 from multiply_core.util import FileRef
 from multiply_core.variables import Variable
 import multiply_post_processing
 from multiply_post_processing import PostProcessorCreator, VariablePostProcessor, PostProcessorType
-from multiply_post_processing.post_processing import _group_file_refs_by_date, _get_valid_files, run_post_processing
+from multiply_post_processing.post_processing import _group_file_refs_by_date, run_post_processing
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
@@ -50,14 +51,14 @@ def test_group_file_refs_by_date():
 
 def test_get_valid_files():
     data_path = './test/test_data/'
-    cab_files = _get_valid_files(data_path, ['cab'])
+    cab_files = get_valid_files(data_path, ['cab'])
     expected_cab_file_paths = ['{}{}'.format(data_path, 'cab_A2017156.tif'),
                                '{}{}'.format(data_path, 'cab_A2017166.tif')]
     assert 2 == len(cab_files)
     assert cab_files[0].url in expected_cab_file_paths
     assert cab_files[1].url in expected_cab_file_paths
 
-    valid_files = _get_valid_files(data_path, ['cw', 'lai', 'psoil'])
+    valid_files = get_valid_files(data_path, ['cw', 'lai', 'psoil'])
     expected_valid_file_paths = ['{}{}'.format(data_path, 'cw_A2017156.tif'),
                                  '{}{}'.format(data_path, 'cw_A2017166.tif'),
                                  '{}{}'.format(data_path, 'lai_A2017156.tif'),
